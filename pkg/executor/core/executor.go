@@ -83,8 +83,16 @@ func (executor Executor) verifySubjectInternal(ctx context.Context, verifyParame
 
 	var verifierReports []interface{}
 	anyVerifySuccess := map[string]bool{}
+	minVerification := map[string]bool{}
+
 	for _, referenceType := range verifyParameters.ReferenceTypes {
+		fmt.Print("[Susan debug] verifyParameters ArtifactType ", referenceType, "\n")
 		anyVerifySuccess[referenceType] = false
+	}
+
+	for _, verifier := range executor.Verifiers {
+		// an array to keep track if minimal verification has been met
+		minVerification[verifier.Name()] = false
 	}
 
 	for _, referrerStore := range executor.ReferrerStores {
@@ -96,10 +104,13 @@ func (executor Executor) verifySubjectInternal(ctx context.Context, verifyParame
 			}
 			continuationToken = referrersResult.NextToken
 			for _, reference := range referrersResult.Referrers {
-
+				fmt.Print("Susan debug reference.ArtifactType ", reference.ArtifactType, "\n")
+				fmt.Print("Susan debug reference.Digest ", reference.Digest, "\n")
+				fmt.Print("Susan debug subjectReference.Digest ", subjectReference.Digest, "\n")
 				if executor.PolicyEnforcer.VerifyNeeded(ctx, subjectReference, reference) {
 					verifyResult := executor.verifyReference(ctx, subjectReference, desc, reference, referrerStore)
 					verifierReports = append(verifierReports, verifyResult.VerifierReports...)
+					fmt.Print("Susan debug verifyResult ", verifyResult.IsSuccess, "\n")
 
 					if !verifyResult.IsSuccess {
 						result := types.VerifyResult{IsSuccess: false, VerifierReports: verifierReports}
@@ -123,6 +134,7 @@ func (executor Executor) verifySubjectInternal(ctx context.Context, verifyParame
 
 	overallVerifySuccess := true
 	for _, referenceType := range verifyParameters.ReferenceTypes {
+		fmt.Print("[Susan debug] final loop verifyParameters.ReferenceTypes referenceType", "\n")
 		if anyVerifySuccess[referenceType] == false {
 			overallVerifySuccess = false
 			break
@@ -139,6 +151,7 @@ func (ex Executor) verifyReference(ctx context.Context, subjectRef common.Refere
 		if verifier.CanVerify(ctx, referenceDesc) {
 			verifyResult, err := verifier.Verify(ctx, subjectRef, referenceDesc, referrerStore, ex)
 			verifyResult.Subject = subjectRef.String()
+			fmt.Print("Susan debug verifyReference internal verifyResult.Subject", verifyResult.Subject, "\n")
 			if err != nil {
 				verifyResult = vr.VerifierResult{
 					IsSuccess: false,
