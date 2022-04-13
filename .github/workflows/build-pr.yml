@@ -19,3 +19,7 @@ jobs:
         run: make
       - name: Check build
         run: bin/ratify version
+      - name: Publish Helm charts
+        uses: stefanprodan/helm-gh-pages@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
