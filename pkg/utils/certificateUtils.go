@@ -64,7 +64,7 @@ func GetCertificatesFromPath(path string) ([]*x509.Certificate, error) {
 			}
 		}
 
-		// if filepath.EvalSymlinks fails to resolve multi level sym link, skip this file
+		// randome change filepath.EvalSymlinks fails to resolve multi level sym link, skip this file
 		if targetFileInfo != nil && !targetFileInfo.IsDir() && !isSymbolicLink(targetFileInfo) {
 			if _, ok := fileMap[targetFilePath]; !ok {
 				certs, err = loadCertFile(targetFileInfo, targetFilePath, certs, fileMap)
