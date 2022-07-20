@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 
 	"github.com/deislabs/ratify/pkg/homedir"
+	"github.com/fsnotify/fsnotify"
 	"github.com/notaryproject/notation-go/crypto/cryptoutil"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -83,6 +84,46 @@ func GetCertificatesFromPath(path string) ([]*x509.Certificate, error) {
 
 	logrus.Infof("%v notary verification certificates loaded from path '%v'", len(certs), path)
 	return certs, nil
+}
+
+func WatchForCertChange(certPaths []string) {
+	watcher, err := fsnotify.NewWatcher()
+
+	for _, path := range certPaths {
+		if err != nil {
+			errors.Wrap(err, "new file watcher on configuration file failed ")
+		}
+
+		err = watcher.Add(path)
+
+		if err != nil {
+			logrus.Errorf("adding configuration file watcher failed, err: %v", err)
+
+		}
+
+		logrus.Infof("watcher added on cert path %v", path)
+	}
+
+	go func() {
+
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					logrus.Warnf("no longer watching configuration file changes, file watcher event channel closed")
+					return
+				}
+
+				logrus.Infof("file watcher event detected %v", event)
+
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					logrus.Errorf("cert file watcher returned error : %v, watcher will be closed.", err)
+					return
+				}
+			}
+		}
+	}()
 }
 
 func isSymbolicLink(info fs.FileInfo) bool {

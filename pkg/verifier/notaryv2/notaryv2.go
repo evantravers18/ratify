@@ -147,8 +147,11 @@ func (v *notaryV2Verifier) Verify(ctx context.Context,
 
 func getVerifierService(certPaths ...string) (*jws.Verifier, error) {
 	roots := x509.NewCertPool()
-	for _, path := range certPaths {
+	utils.WatchForCertChange(certPaths)
 
+	for _, path := range certPaths {
+		// in a keyvault scenario, what is the path to watch?
+		// in a local file scenario
 		bundledCerts, err := utils.GetCertificatesFromPath(path)
 
 		if err != nil {
