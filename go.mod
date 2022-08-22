@@ -11,6 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.15.0
 	github.com/docker/cli v20.10.17+incompatible
 	github.com/docker/distribution v2.8.1+incompatible
+	github.com/fsnotify/fsnotify v1.5.4
 	github.com/google/go-containerregistry v0.10.0
 	github.com/gorilla/mux v1.8.0
 	github.com/notaryproject/notation-go v0.8.0-alpha.1
@@ -25,9 +26,9 @@ require (
 	github.com/spdx/tools-golang v0.2.0
 	github.com/spf13/cobra v1.5.0
 	github.com/xlab/treeprint v1.1.0
-	k8s.io/api v0.24.3
-	k8s.io/apimachinery v0.24.3
-	k8s.io/client-go v0.24.3
+	k8s.io/api v0.24.4
+	k8s.io/apimachinery v0.24.4
+	k8s.io/client-go v0.24.4
 	oras.land/oras-go/v2 v2.0.0-20220630033939-f37492936f3e
 )
 
@@ -71,7 +72,6 @@ require (
 	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
 	github.com/envoyproxy/go-control-plane v0.10.2-0.20220325020618-49ff273808a1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.6.2 // indirect
-	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/fullstorydev/grpcurl v1.8.6 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-chi/chi v4.1.2+incompatible // indirect
