@@ -136,7 +136,7 @@ but we can look at what will be generated below:
           {
             "name": "cosign",
             "artifactTypes": "application/vnd.dev.cosign.simplesigning.v1+json",
-            "key": "/usr/local/ratify-certs/cosign.pub"
+            "key": "/usr/local/ratify-certs/cosign/cosign.pub"
           }
         ]        
     }

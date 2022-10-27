@@ -32,7 +32,7 @@ data:
                 "name":"notaryv2",
                 "artifactTypes" : "application/vnd.cncf.notary.v2.signature",
                 "verificationCerts": [
-                    "/usr/local/ratify-certs"
+                    "/usr/local/ratify-certs/notary"
                   ]
             }
           ]
