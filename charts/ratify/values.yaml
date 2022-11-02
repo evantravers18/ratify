@@ -23,7 +23,7 @@ ratifyTestCert: |
   Ibo/J0urezLK/M8/QeMkkhY1WClsAi+xLhVWUw==
   -----END CERTIFICATE-----
 cosign:
-  enabled: true
+  enabled: false
   key: ""
 resources:
    limits:

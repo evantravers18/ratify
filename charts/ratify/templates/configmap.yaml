@@ -41,14 +41,7 @@ data:
       "policy": {
         "version": "1.0.0",
         "plugin": {
-            "name": "configPolicy",
-            "artifactVerificationPolicies": {
-              {{- if .Values.cosign.enabled }}
-                "org.sigstore.cosign.v1": "all"
-              {{ else }}
-                "application/vnd.cncf.notary.v2.signature": "all"
-              {{- end }}                                
-            }
+            "name": "configPolicy"
         }
       },
       "verifier": {
