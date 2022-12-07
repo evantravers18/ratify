@@ -1,11 +1,9 @@
 /*
-Copyright The Ratify Authors.
+Copyright 2022.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
+    http://www.apache.org/licenses/LICENSE-2.0
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,27 +11,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package manager
+package main
 
 import (
 	"context"
 	"flag"
 	"os"
 
-	_ "github.com/deislabs/ratify/pkg/policyprovider/configpolicy"
-	_ "github.com/deislabs/ratify/pkg/referrerstore/oras"
-	_ "github.com/deislabs/ratify/pkg/verifier/notaryv2"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
-	"github.com/deislabs/ratify/config"
-	"github.com/deislabs/ratify/httpserver"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
 	_ "github.com/deislabs/ratify/pkg/policyprovider/configpolicy"
 	_ "github.com/deislabs/ratify/pkg/referrerstore/oras"
 	_ "github.com/deislabs/ratify/pkg/verifier/notaryv2"
-	"github.com/sirupsen/logrus"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/deislabs/ratify/pkg/verifier"
 
@@ -44,7 +35,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/sirupsen/logrus"
+
 	configv1alpha1 "github.com/deislabs/ratify/api/v1alpha1"
+	"github.com/deislabs/ratify/config"
+	"github.com/deislabs/ratify/httpserver"
 	"github.com/deislabs/ratify/pkg/controllers"
 	ef "github.com/deislabs/ratify/pkg/executor/core"
 	"github.com/deislabs/ratify/pkg/policyprovider"
@@ -68,10 +63,11 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
-func StartServer(httpServerAddress string, configFilePath string, certDirectory string, caCertFile string) {
+func startServer() {
 
 	logrus.Infof("initializing executor with config file at default config path")
 
+	configFilePath := ""
 	cf, err := config.Load(configFilePath)
 
 	configStores, configVerifiers, policy, err := config.CreateFromConfig(cf)
@@ -82,6 +78,7 @@ func StartServer(httpServerAddress string, configFilePath string, certDirectory 
 	}
 
 	// initialize server
+	httpServerAddress := ":6001"
 	server, err := httpserver.NewServer(context.Background(), httpServerAddress, func() *ef.Executor {
 
 		var activeVerifiers []vr.ReferenceVerifier
@@ -115,7 +112,7 @@ func StartServer(httpServerAddress string, configFilePath string, certDirectory 
 			Config:         &cf.ExecutorConfig,
 		}
 		return &executor
-	}, certDirectory, caCertFile)
+	}, "", "") // TODO: fix the tls logic
 
 	if err != nil {
 		os.Exit(1)
@@ -126,7 +123,7 @@ func StartServer(httpServerAddress string, configFilePath string, certDirectory 
 	}
 }
 
-func StartManager() {
+func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -181,7 +178,6 @@ func StartManager() {
 		setupLog.Error(err, "unable to create controller", "controller", "Store")
 		os.Exit(1)
 	}
-
 	if err = (&configv1alpha1.Store{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "Store")
 		os.Exit(1)
@@ -201,9 +197,12 @@ func StartManager() {
 		os.Exit(1)
 	}
 
+	go startServer()
+
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+
 }

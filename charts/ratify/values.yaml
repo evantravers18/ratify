@@ -90,3 +90,5 @@ crds:
     runAsGroup: 65532
     runAsNonRoot: true
     runAsUser: 65532
+
+disableValidatingWebhook: false

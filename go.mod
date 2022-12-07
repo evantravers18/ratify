@@ -1,6 +1,6 @@
 module github.com/deislabs/ratify
 
-go 1.19
+go 1.18
 
 require (
 	github.com/Azure/azure-sdk-for-go v67.0.0+incompatible
@@ -19,6 +19,8 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/notaryproject/notation-core-go v0.1.0-alpha.4
 	github.com/notaryproject/notation-go v0.11.0-alpha.4
+	github.com/onsi/ginkgo v1.16.5
+	github.com/onsi/gomega v1.19.0
 	github.com/open-policy-agent/frameworks/constraint v0.0.0-20220627162905-95c012350402
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc2
@@ -37,6 +39,11 @@ require (
 	k8s.io/apimachinery v0.24.8
 	k8s.io/client-go v0.24.8
 	oras.land/oras-go/v2 v2.0.0-rc.3
+)
+
+require (
+	github.com/nxadm/tail v1.4.8 // indirect
+	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 )
 
 require (

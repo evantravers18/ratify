@@ -51,6 +51,9 @@ spec:
             {{- end }}
           ports:
             - containerPort: 6001
+            - containerPort: 9443
+              name: webhook-server
+              protocol: TCP
           volumeMounts:
             - mountPath: "/usr/local/ratify-certs/notary"
             {{- if .Values.akvCertConfig.enabled }}
@@ -81,7 +84,10 @@ spec:
               name: client-ca-cert
               readOnly: true
             {{- end }}
-            {{- end }}
+            {{- end }}                    
+            - mountPath: /tmp/k8s-webhook-server/serving-certs
+              name: tls
+              readOnly: true
           env:
           {{- if $dockerAuthMode }}
             - name: DOCKER_CONFIG
