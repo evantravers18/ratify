@@ -36,7 +36,7 @@ Get Ratify Community Meeting Calendar [here](https://calendar.google.com/calenda
 
 ## Quick Start
 
-Try out ratify in Kubernetes through Gatekeeper as the admission controller.
+Try out ratify in Kubernetes through Gatekeeper as the admission controller. Checkout [Ratify demo](https://killercoda.com/notaryproject/scenario/ratify) at the online interactive playground, or follow steps below for your local cluster.
 
 Prerequisites:
 - Kubernetes v1.20 or higher
