@@ -31,7 +31,7 @@ jobs:
 
       - name: Copy signed sample test image
         run: 
-          oras cp wabbitnetworks.azurecr.io/test/notary-image:signed ${REPOSITORY}/notary-image:signed
+          oras cp -r huishwabbit1.azurecr.io/ratify/notary-image:signed ${REPOSITORY}/notary-image:signed
 
       - name: Copy unsigned sample test image 
         run: 
