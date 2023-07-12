@@ -67,6 +67,12 @@ type notaryv2VerifierFactory struct{}
 
 func init() {
 	factory.Register(verifierName, &notaryv2VerifierFactory{})
+	//StartClientAndMakeReq()
+	/*temporarly also start the grpc server
+	go StartGRPCServer()
+	logrus.Info("hi, this is susan grpc server started")
+
+	logrus.Info("hi, this is susan grpc client finished")*/
 }
 
 func (f *notaryv2VerifierFactory) Create(_ string, verifierConfig config.VerifierConfig, pluginDirectory string) (verifier.ReferenceVerifier, error) {

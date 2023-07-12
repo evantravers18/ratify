@@ -1,0 +1,39 @@
+syntax="proto3";
+
+package verifier;
+
+option go_package = "github.com/deislabs/ratify/experimental/proto/v2/verifier";
+
+ 
+import "google/protobuf/struct.proto";
+
+
+// Verifier plugin interface
+service VerifierPlugin {
+    rpc init( config)
+    // Perform verification of a given artifact
+    rpc VerifyReference (VerifyReferenceRequest) returns (VerifyReferenceResponse);
+}
+
+// Request for VerifyReference
+message VerifyReferenceRequest {
+    // The subject of the artifact.
+    string subject = 1;
+    // The artifact to be evaluated.
+    string reference = 2;
+    // Optional. Custom to the verifier plugin. Can be used to further customize the artifact verification logic.
+    google.protobuf.Struct configuration = 3;
+}
+
+// Response for VerifyReference
+message VerifyReferenceResponse {
+     // The name of the verifier which evaluated the artifact.
+    string verifierName = 1;
+    // The subject of the artifact.
+    string subject = 2;
+    // The artifact under evaluation.
+    string reference = 3;
+    // Whether the artifact passed validation
+    bool valid = 4;
+ 
+}
