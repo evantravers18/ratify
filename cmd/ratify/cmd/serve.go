@@ -77,9 +77,10 @@ func serve(opts serveCmdOptions) error {
 	if opts.enableCrdManager {
 		tlsWatcherReady := make(chan struct{})
 		logrus.Infof("starting crd manager")
-		go manager.StartGRPCServer()
+		//go manager.StartGRPCServer()
+		manager.HashicorpDriver()
 		go manager.StartManager(tlsWatcherReady)
-		manager.StartClientAndMakeReq()
+		//manager.StartClientAndMakeReq()
 		manager.StartServer(opts.httpServerAddress, opts.configFilePath, opts.certDirectory, opts.caCertFile, opts.cacheSize, opts.cacheTTL, opts.metricsEnabled, opts.metricsType, opts.metricsPort, tlsWatcherReady)
 
 		return nil

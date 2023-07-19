@@ -1,0 +1,21 @@
+syntax="proto3";
+
+package certstore;
+
+message Empty {}
+
+message GetResponse {
+    bytes value = 1;
+}
+
+message GetRequest {
+    message AttributeMapEntry {
+        string key = 1;
+        string value = 2;
+      }
+    repeated AttributeMapEntry attrib = 1;
+}
+
+service AKVPlugin {
+    rpc Get(GetRequest) returns (GetResponse);
+}
