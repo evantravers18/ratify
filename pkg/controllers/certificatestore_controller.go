@@ -21,12 +21,16 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"os"
+	"os/exec"
 
 	configv1beta1 "github.com/deislabs/ratify/api/v1beta1"
+	cs "github.com/deislabs/ratify/experimental/ratify/proto/v2/certstore"
 	"github.com/deislabs/ratify/pkg/certificateprovider"
 	_ "github.com/deislabs/ratify/pkg/certificateprovider/azurekeyvault" // register azure keyvault certificate provider
 	_ "github.com/deislabs/ratify/pkg/certificateprovider/inline"        // register inline certificate provider
 	"github.com/deislabs/ratify/pkg/utils"
+	"github.com/hashicorp/go-plugin"
 
 	"github.com/sirupsen/logrus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -69,7 +73,7 @@ func (r *CertificateStoreReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	var certStore configv1beta1.CertificateStore
 
 	logger.Infof("reconciling certificate store '%v'", resource)
-
+	HashicorpDriver()
 	if err := r.Get(ctx, req.NamespacedName, &certStore); err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.Infof("deletion detected, removing certificate store %v", req.Name)
@@ -112,6 +116,55 @@ func (r *CertificateStoreReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	// returning empty result and no error to indicate we’ve successfully reconciled this object
 	return ctrl.Result{}, nil
+}
+
+func HashicorpDriver() {
+	// We don't want to see the plugin logs.
+	//log.SetOutput(ioutil.Discard)
+
+	// We're a host. Start by launching the plugin process.
+	client := plugin.NewClient(&plugin.ClientConfig{
+		HandshakeConfig: cs.Handshake,
+		Plugins:         cs.PluginMap,
+		Cmd:             exec.Command("sh", "-c", "/home/azureuser/repo/susanFork/ratify/pkg/certificateprovider/akv-go-grpc"),
+		AllowedProtocols: []plugin.Protocol{
+			plugin.ProtocolNetRPC, plugin.ProtocolGRPC},
+	})
+	defer client.Kill()
+
+	// Connect via RPC
+	rpcClient, err := client.Client()
+	if err != nil {
+		fmt.Println("Error:", err.Error())
+		os.Exit(1)
+	}
+
+	// Request the plugin
+	raw, err := rpcClient.Dispense("kv_grpc")
+	if err != nil {
+		fmt.Println("Error:", err.Error())
+		os.Exit(1)
+	}
+
+	// We should have a KV store now! This feels like a normal interface
+	// implementation but is in fact over an RPC connection.
+	kv := raw.(cs.CertStore)
+
+	attrib := map[string]string{}
+	attrib["keyvaultName"] = "notarycerts"
+	attrib["clientID"] = "1c7ac023-5bf6-4916-83f2-96dd203e35a3"
+	attrib["cloudName"] = "AzurePublicCloud"
+	attrib["tenantID"] = "72f988bf-86f1-41af-91ab-2d7cd011db47"
+	attrib["objects"] = "array:\n- |\n  certificateName: wabbit-networks-io \n  certificateAlias: \"testCert\"\n  certificateVersion: 97a1545d893344079ce57699c8810590 \n  certificateVersionHistory: 0\n"
+
+	result, err := kv.Get(attrib)
+	if err != nil {
+		fmt.Println("Error:", err.Error())
+
+	}
+
+	fmt.Println(string(result))
+
 }
 
 // returns the internal certificate map

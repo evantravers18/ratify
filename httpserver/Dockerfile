@@ -31,6 +31,7 @@ RUN if [ "$build_sbom" = "true" ]; then go build -o /app/out/plugins/ /app/plugi
 RUN if [ "$build_cosign" = "true" ]; then go build -o /app/out/plugins/ /app/plugins/verifier/cosign; fi
 RUN if [ "$build_licensechecker" = "true" ]; then go build -o /app/out/plugins/ /app/plugins/verifier/licensechecker; fi
 RUN if [ "$build_schemavalidator" = "true" ]; then go build -o /app/out/plugins/ /app/plugins/verifier/schemavalidator; fi
+RUN go build -o /app/out/plugins/akv-go-grpc /app/certificateprovider/hashicorpPlugin
 
 FROM $BASEIMAGE
 LABEL org.opencontainers.image.source https://github.com/deislabs/ratify

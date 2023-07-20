@@ -16,6 +16,6 @@ message GetRequest {
     repeated AttributeMapEntry attrib = 1;
 }
 
-service AKVPlugin {
+service CertStorePlugin {
     rpc Get(GetRequest) returns (GetResponse);
 }

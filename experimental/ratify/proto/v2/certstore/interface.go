@@ -18,36 +18,36 @@ var Handshake = plugin.HandshakeConfig{
 
 // PluginMap is the map of plugins we can dispense.
 var PluginMap = map[string]plugin.Plugin{
-	"kv_grpc": &AKVCertStoreGRPCPlugin{},
+	"kv_grpc": &CertStoreGRPCPlugin{},
 }
 
 // KV is the interface that we're exposing as a plugin.
-type AKV interface {
+type CertStore interface {
 	//Get(attrib []*GetRequest_AttributeMapEntry) ([]byte, error)
 	Get(attrib map[string]string) ([]byte, error)
 }
 
 // This is the implementation of plugin.Plugin so we can serve/consume this.
-type KVPlugin struct {
+type CertStorePlugin struct {
 	// Concrete implementation, written in Go. This is only used for plugins
 	// that are written in Go.
-	Impl AKV
+	Impl CertStore
 }
 
 // This is the implementation of plugin.GRPCPlugin so we can serve/consume this.
-type AKVCertStoreGRPCPlugin struct {
+type CertStoreGRPCPlugin struct {
 	// GRPCPlugin must still implement the Plugin interface
 	plugin.Plugin
 	// Concrete implementation, written in Go. This is only used for plugins
 	// that are written in Go.
-	Impl AKV
+	Impl CertStore
 }
 
-func (p *AKVCertStoreGRPCPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
-	RegisterAKVPluginServer(s, &GRPCServer{Impl: p.Impl})
+func (p *CertStoreGRPCPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
+	RegisterCertStorePluginServer(s, &GRPCServer{Impl: p.Impl})
 	return nil
 }
 
-func (p *AKVCertStoreGRPCPlugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
-	return &GRPCClient{client: NewAKVPluginClient(c)}, nil
+func (p *CertStoreGRPCPlugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
+	return &GRPCClient{client: NewCertStorePluginClient(c)}, nil
 }

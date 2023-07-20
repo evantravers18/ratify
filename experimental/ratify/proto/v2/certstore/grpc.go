@@ -5,19 +5,21 @@ import (
 )
 
 // GRPCClient is an implementation of KV that talks over RPC.
-type GRPCClient struct{ client AKVPluginClient }
+type GRPCClient struct{ client CertStorePluginClient }
 
 func (m *GRPCClient) Get(attrib map[string]string) ([]byte, error) {
-	test := &GetRequest_AttributeMapEntry{
-		Key:   "test",
-		Value: "testvalue",
+
+	request := []*GetRequest_AttributeMapEntry{}
+	for key, value := range attrib {
+		entry := &GetRequest_AttributeMapEntry{
+			Key:   key,
+			Value: value,
+		}
+		request = append(request, entry)
 	}
 
-	strSlice := make([]*GetRequest_AttributeMapEntry, 5)
-	strSlice = append(strSlice, test)
-
 	resp, err := m.client.Get(context.Background(), &GetRequest{
-		Attrib: strSlice,
+		Attrib: request,
 	})
 	if err != nil {
 		return nil, err
@@ -29,7 +31,7 @@ func (m *GRPCClient) Get(attrib map[string]string) ([]byte, error) {
 // Here is the gRPC server that GRPCClient talks to.
 type GRPCServer struct {
 	// This is the real implementation
-	Impl AKV
+	Impl CertStore
 }
 
 func (m *GRPCServer) Get(
@@ -37,9 +39,10 @@ func (m *GRPCServer) Get(
 	req *GetRequest) (*GetResponse, error) {
 
 	attrib := map[string]string{}
-	attrib["keyvaultName"] = "notarycerts"
+	for _, entry := range req.Attrib {
+		attrib[entry.Key] = entry.Value
+	}
 
-	//v, err := m.Impl.Get(req.Attrib)
 	v, err := m.Impl.Get(attrib)
 	return &GetResponse{Value: v}, err
 }

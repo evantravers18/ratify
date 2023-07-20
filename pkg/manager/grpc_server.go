@@ -6,15 +6,12 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
-	"os/exec"
 
-	"github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	pb "github.com/deislabs/ratify/experimental/proto/v2/verifier"
-	cs "github.com/deislabs/ratify/experimental/ratify/proto/v2/certstore"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -60,51 +57,6 @@ func StartGRPCServer() {
 	grpcServer := grpc.NewServer(opts...)
 	pb.RegisterVerifierPluginServer(grpcServer, newServer())
 	grpcServer.Serve(lis)
-}
-
-func HashicorpDriver() {
-	// We don't want to see the plugin logs.
-	//log.SetOutput(ioutil.Discard)
-
-	// We're a host. Start by launching the plugin process.
-	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: cs.Handshake,
-		Plugins:         cs.PluginMap,
-		Cmd:             exec.Command("sh", "-c", "/home/azureuser/repo/susanFork/ratify/pkg/certificateprovider/kv-go-grpc"),
-		AllowedProtocols: []plugin.Protocol{
-			plugin.ProtocolNetRPC, plugin.ProtocolGRPC},
-	})
-	defer client.Kill()
-
-	// Connect via RPC
-	rpcClient, err := client.Client()
-	if err != nil {
-		fmt.Println("Error:", err.Error())
-		os.Exit(1)
-	}
-
-	// Request the plugin
-	raw, err := rpcClient.Dispense("kv_grpc")
-	if err != nil {
-		fmt.Println("Error:", err.Error())
-		os.Exit(1)
-	}
-
-	// We should have a KV store now! This feels like a normal interface
-	// implementation but is in fact over an RPC connection.
-	kv := raw.(cs.AKV)
-
-	attrib := map[string]string{}
-	attrib["keyvaultName"] = "notarycerts"
-
-	result, err := kv.Get(attrib)
-	if err != nil {
-		fmt.Println("Error:", err.Error())
-		os.Exit(1)
-	}
-
-	fmt.Println(string(result))
-
 }
 
 func StartClientAndMakeReq() {

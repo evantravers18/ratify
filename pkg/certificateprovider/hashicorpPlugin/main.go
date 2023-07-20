@@ -7,8 +7,10 @@ import (
 	"context"
 	"strconv"
 
-	cs "github.com/deislabs/ratify/experimental/ratify/proto/v2/certstore"
 	"github.com/deislabs/ratify/pkg/certificateprovider"
+	_ "github.com/deislabs/ratify/pkg/certificateprovider/azurekeyvault" // register azure keyvault certificate provider
+
+	cs "github.com/deislabs/ratify/experimental/ratify/proto/v2/certstore"
 	"github.com/hashicorp/go-plugin"
 	"github.com/sirupsen/logrus"
 )
@@ -22,10 +24,18 @@ func (AKV) Get(attrib map[string]string) ([]byte, error) {
 
 	providers := certificateprovider.GetCertificateProviders()
 	akvProvider := providers["azurekeyvault"]
+	str := "akProvider is nil"
+	if akvProvider == nil {
+		logrus.Info("provider is nil")
 
-	results, _, _ := akvProvider.GetCertificates(context.Background(), attrib)
+	} else {
+		results, _, err := akvProvider.GetCertificates(context.Background(), attrib)
 
-	str := "in the future we should return cert or byte array" + strconv.Itoa(len(results))
+		errString := ", error, " + err.Error()
+
+		str = errString + "in the future we should return cert or byte array," + strconv.Itoa(len(results))
+
+	}
 	// converting and printing Byte array
 
 	return []byte(str), nil
@@ -35,7 +45,7 @@ func main() {
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: cs.Handshake,
 		Plugins: map[string]plugin.Plugin{
-			"kv": &cs.AKVCertStoreGRPCPlugin{Impl: &AKV{}},
+			"kv": &cs.CertStoreGRPCPlugin{Impl: &AKV{}},
 		},
 
 		// A non-nil value here enables gRPC serving for this plugin...
