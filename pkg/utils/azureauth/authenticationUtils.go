@@ -72,6 +72,6 @@ func readJWTFromFS(tokenFilePath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	logrus.Infof("July 19, Logging token string ", string(token))
+	logrus.Infof("Susan  Logging token string ", string(token))
 	return string(token), nil
 }

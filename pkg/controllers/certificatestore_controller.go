@@ -21,7 +21,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
 
 	configv1beta1 "github.com/deislabs/ratify/api/v1beta1"
@@ -126,7 +125,7 @@ func HashicorpDriver() {
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: cs.Handshake,
 		Plugins:         cs.PluginMap,
-		Cmd:             exec.Command("sh", "-c", "/home/azureuser/repo/susanFork/ratify/pkg/certificateprovider/akv-go-grpc"),
+		Cmd:             exec.Command("sh", "-c", "~/.ratify/plugins/akv-go-grpc"),
 		AllowedProtocols: []plugin.Protocol{
 			plugin.ProtocolNetRPC, plugin.ProtocolGRPC},
 	})
@@ -136,14 +135,14 @@ func HashicorpDriver() {
 	rpcClient, err := client.Client()
 	if err != nil {
 		fmt.Println("Error:", err.Error())
-		os.Exit(1)
+		return
 	}
 
 	// Request the plugin
 	raw, err := rpcClient.Dispense("kv_grpc")
 	if err != nil {
 		fmt.Println("Error:", err.Error())
-		os.Exit(1)
+		return
 	}
 
 	// We should have a KV store now! This feels like a normal interface

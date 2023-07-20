@@ -70,6 +70,9 @@ func InitDefaultPaths() {
 		configDir = filepath.Join(getHomeDir(), ConfigFileDir)
 	}
 	defaultPluginsPath = filepath.Join(configDir, PluginsFolder)
+
+	logrus.Info("Susan trying to see defaultPluginsPath ", defaultPluginsPath)
+
 	defaultConfigFilePath = filepath.Join(configDir, ConfigFileName)
 }
 
