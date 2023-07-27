@@ -279,8 +279,8 @@ func TestGetCertFromSecretBundle(t *testing.T) {
 	// PEM
 	secretForTesting := getSecretBundlePem()
 	cert, status, _ := getCertFromSecretBundle(secretForTesting, "certName")
-	assert.Equal(t, len(cert), 1)
-	assert.Equal(t, len(status), 1)
+	assert.Equal(t, 2, len(cert))
+	assert.Equal(t, 2, len(status))
 
 	// PkcS
 	secretForTesting = getSecretBundlePkcs()

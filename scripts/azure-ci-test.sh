@@ -91,7 +91,8 @@ upload_cert_to_akv() {
   cp .staging/notaryv2/akvtest/leaf.key ~/.config/notation/localkeys/ratify-bats-test.key
   cp .staging/notaryv2/akvtest/ca.crt ~/.config/notation/localkeys/ratify-bats-test.crt
   
-  cat ~/.config/notation/localkeys/ratify-bats-test.crt >>notary.pem
+  cat ~/.config/notation/localkeys/ratify-bats-test.key >>notary.pem
+  cat .staging/notaryv2/akvtest/ca.crt >>notary.pem
   cat .staging/notaryv2/akvtest/leaf.crt >>notary.pem
   
   az keyvault certificate import \
