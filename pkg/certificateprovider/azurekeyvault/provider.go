@@ -98,30 +98,22 @@ func (s *akvCertProvider) GetCertificates(ctx context.Context, attrib map[string
 
 	certs := []*x509.Certificate{}
 	certsStatus := []map[string]string{}
-	lastRefreshed := time.Now().Format(time.RFC3339)
-
 	for _, keyVaultCert := range keyVaultCerts {
-		logrus.Debugf("fetching object from key vault, certName %v,  keyvault %v", keyVaultCert.CertificateName, keyvaultURI)
+		logrus.Debugf("fetching secret from key vault, certName %v,  keyvault %v", keyVaultCert.CertificateName, keyvaultURI)
 
 		// fetch the object from Key Vault
 		startTime := time.Now()
-		keyvaultResult, err := getCertificate(ctx, kvClient, keyvaultURI, keyVaultCert)
+		secretBundle, err := kvClient.GetSecret(ctx, keyvaultURI, keyVaultCert.CertificateName, keyVaultCert.CertificateVersion)
+
+		temp, certProperty, _ := getCertFromSecretBundle(secretBundle, keyVaultCert.CertificateName)
+
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("failed to get secret objectName:%s, objectVersion:%s, error: %w", keyVaultCert.CertificateName, keyVaultCert.CertificateVersion, err)
 		}
+
 		metrics.ReportAKVCertificateDuration(ctx, time.Since(startTime).Milliseconds(), keyVaultCert.CertificateName)
-
-		// convert bytes to x509
-		decodedCerts, err := certificateprovider.DecodeCertificates([]byte(keyvaultResult.content))
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to decode certificate %s, error: %w", keyVaultCert.CertificateName, err)
-		}
-
-		certs = append(certs, decodedCerts...)
-		logrus.Debugf("cert '%v', version '%v' added", keyVaultCert.CertificateName, keyvaultResult.version)
-
-		certProperty := getCertStatusProperty(keyVaultCert.CertificateName, keyvaultResult.version, lastRefreshed)
-		certsStatus = append(certsStatus, certProperty)
+		certs = append(certs, temp...)
+		certsStatus = append(certsStatus, certProperty...)
 	}
 
 	return certs, getCertStatusMap(certsStatus), nil
@@ -220,6 +212,55 @@ func initializeKvClient(ctx context.Context, keyVaultEndpoint, tenantID, clientI
 		return nil, fmt.Errorf("failed to get authorizer for keyvault client, error: %w", err)
 	}
 	return &kvClient, nil
+}
+
+func getCertFromSecretBundle(secretBundle kv.SecretBundle, certName string) ([]*x509.Certificate, []map[string]string, error) {
+	if *secretBundle.ContentType != "application/x-pkcs12" &&
+		*secretBundle.ContentType != "application/x-pem-file" {
+		return nil, nil, errors.Errorf("secret content type is invalid, expected type are application/x-pkcs12 or application/x-pem-file")
+	}
+
+	if secretBundle.Value == nil {
+		return nil, nil, errors.Errorf("secret value is nil")
+	}
+
+	version := getObjectVersion(*secretBundle.ID)
+
+	certs := []*x509.Certificate{}
+	certsStatus := []map[string]string{}
+	lastRefreshed := time.Now().Format(time.RFC3339)
+
+	block, rest := pem.Decode([]byte(*secretBundle.Value))
+	for block != nil {
+		switch block.Type {
+		case "PRIVATE KEY":
+			logrus.Warn("WARNING!!! You should configure your private key to be non exportable")
+		case "CERTIFICATE":
+			var pemData []byte
+			pemData = append(pemData, pem.EncodeToMemory(block)...)
+			decodedCerts, err := certificateprovider.DecodeCertificates(pemData)
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to decode certificate %s, error: %w", certName, err)
+			}
+			cert := decodedCerts[0]
+
+			certs = append(certs, cert)
+			//logrus.Debugf("cert '%v', version '%v' added", keyVaultCert.CertificateName, cert.version)
+
+			certProperty := getCertStatusProperty(certName, version, lastRefreshed)
+			certsStatus = append(certsStatus, certProperty)
+
+		default:
+			logrus.Warn("WARNING!!! unknown block type", block.Type)
+		}
+
+		block, rest = pem.Decode(rest)
+		if block == nil && len(rest) > 0 {
+			return nil, nil, errors.Errorf("unexpected block is nil or rest > 0")
+		}
+	}
+	return certs, certsStatus, nil
+
 }
 
 // getCertificate retrieves the certificate from the vault
