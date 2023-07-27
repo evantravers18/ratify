@@ -60,7 +60,7 @@ SLEEP_TIME=1
     run kubectl run demo-leaf --namespace default --image=${TEST_REGISTRY}/notation:leafSigned
     assert_success
 
-    # add the root certificate as an inline certificate store
+    # add the leaf certificate as an inline certificate store
     cat ~/.config/notation/truststore/x509/ca/leaf-test/leaf.crt | sed 's/^/      /g' >>./test/bats/tests/config/config_v1beta1_certstore_inline.yaml
     run kubectl apply -f ./test/bats/tests/config/config_v1beta1_certstore_inline.yaml
     assert_success
