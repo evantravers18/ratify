@@ -105,10 +105,14 @@ func (s *akvCertProvider) GetCertificates(ctx context.Context, attrib map[string
 		startTime := time.Now()
 		secretBundle, err := kvClient.GetSecret(ctx, keyvaultURI, keyVaultCert.CertificateName, keyVaultCert.CertificateVersion)
 
-		temp, certProperty, _ := getCertFromSecretBundle(secretBundle, keyVaultCert.CertificateName)
-
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to get secret objectName:%s, objectVersion:%s, error: %w", keyVaultCert.CertificateName, keyVaultCert.CertificateVersion, err)
+		}
+
+		temp, certProperty, err := getCertFromSecretBundle(secretBundle, keyVaultCert.CertificateName)
+
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to get certificates from secret bundle:%s", err)
 		}
 
 		metrics.ReportAKVCertificateDuration(ctx, time.Since(startTime).Milliseconds(), keyVaultCert.CertificateName)
