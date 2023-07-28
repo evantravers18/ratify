@@ -267,6 +267,9 @@ e2e-notaryv2-setup:
 
 	rm -rf ~/.config/notation
 	.staging/notaryv2/notation cert generate-test --default "ratify-bats-test"
+	
+	mkdir -p .staging/notaryv2/akvtest
+	./scripts/generate-cert-chain.sh .staging/notaryv2/akvtest
 
 	.staging/notaryv2/notation sign -u ${TEST_REGISTRY_USERNAME} -p ${TEST_REGISTRY_PASSWORD} `docker image inspect ${TEST_REGISTRY}/notation:signed | jq -r .[0].RepoDigests[0]`
 	.staging/notaryv2/notation sign -u ${TEST_REGISTRY_USERNAME} -p ${TEST_REGISTRY_PASSWORD} `docker image inspect ${TEST_REGISTRY}/all:v0 | jq -r .[0].RepoDigests[0]`
