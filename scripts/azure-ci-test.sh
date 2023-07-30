@@ -87,18 +87,23 @@ deploy_ratify() {
 }
 
 upload_cert_to_akv() {
+  
   rm -f notary.pem
   cat ~/.config/notation/localkeys/ratify-bats-test.key >>notary.pem
   cat ~/.config/notation/localkeys/ratify-bats-test.crt >>notary.pem
 
+  echo "uploading notary.pem"
   az keyvault certificate import \
     --vault-name ${KEYVAULT_NAME} \
     -n ${NOTARY_PEM_NAME} \
     -f notary.pem
 
   rm -f notarychain.pem
-   
+  
+  cat .staging/notaryv2/leaf-test/leaf.key >>notarychain.pem
   cat .staging/notaryv2/leaf-test/leaf.crt >>notarychain.pem   
+
+  echo "uploading notarychain.pem"
   az keyvault certificate import \
     --vault-name ${KEYVAULT_NAME} \
     -n ${NOTARY_CHAIN_PEM_NAME} \

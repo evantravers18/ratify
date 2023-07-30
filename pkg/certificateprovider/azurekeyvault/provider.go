@@ -254,7 +254,7 @@ func getCertFromSecretBundle(secretBundle kv.SecretBundle, certName string) ([]*
 			certs = append(certs, cert)
 			certProperty := getCertStatusProperty(certName, version, lastRefreshed)
 			certsStatus = append(certsStatus, certProperty)
-			logrus.Debugf("cert '%v', version '%v' added", certName)
+			logrus.Debugf("azurekeyvault cert provider: cert '%v', version '%v' added", certName, version)
 
 		default:
 			logrus.Warn("azure keyvualt certificate provider detected unknown block type", block.Type)
