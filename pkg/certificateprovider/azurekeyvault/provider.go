@@ -59,6 +59,7 @@ func Create() certificateprovider.CertificateProvider {
 }
 
 // returns an array of certificates based on certificate properties defined in attrib map
+// get certificate only retrieve the leaf certificate in a cert chain
 func (s *akvCertProvider) GetCertificates(ctx context.Context, attrib map[string]string) ([]*x509.Certificate, certificateprovider.CertificatesStatus, error) {
 	keyvaultURI := types.GetKeyVaultURI(attrib)
 	cloudName := types.GetCloudName(attrib)
@@ -218,6 +219,8 @@ func initializeKvClient(ctx context.Context, keyVaultEndpoint, tenantID, clientI
 	return &kvClient, nil
 }
 
+// parse the secret bundle and return an array of certificates
+// In a certificate chain scenario, all certificate including root and leaf certificate will be returned
 func getCertFromSecretBundle(secretBundle kv.SecretBundle, certName string) ([]*x509.Certificate, []map[string]string, error) {
 	if *secretBundle.ContentType != "application/x-pkcs12" &&
 		*secretBundle.ContentType != "application/x-pem-file" {
@@ -238,7 +241,7 @@ func getCertFromSecretBundle(secretBundle kv.SecretBundle, certName string) ([]*
 	for block != nil {
 		switch block.Type {
 		case "PRIVATE KEY":
-			logrus.Warn("WARNING!!! You should configure your private key to be non exportable")
+			logrus.Warn("private key skipped. Please configure your private key to be non exportable.")
 		case "CERTIFICATE":
 			var pemData []byte
 			pemData = append(pemData, pem.EncodeToMemory(block)...)
@@ -246,16 +249,15 @@ func getCertFromSecretBundle(secretBundle kv.SecretBundle, certName string) ([]*
 			if err != nil {
 				return nil, nil, fmt.Errorf("failed to decode certificate %s, error: %w", certName, err)
 			}
+
 			cert := decodedCerts[0]
-
 			certs = append(certs, cert)
-			//logrus.Debugf("cert '%v', version '%v' added", keyVaultCert.CertificateName, cert.version)
-
 			certProperty := getCertStatusProperty(certName, version, lastRefreshed)
 			certsStatus = append(certsStatus, certProperty)
+			logrus.Debugf("cert '%v', version '%v' added", certName)
 
 		default:
-			logrus.Warn("WARNING!!! unknown block type", block.Type)
+			logrus.Warn("azure keyvualt certificate provider detected unknown block type", block.Type)
 		}
 
 		block, rest = pem.Decode(rest)
