@@ -17,5 +17,6 @@ package utils
 
 type PackageLicense struct {
 	PackageName    string
+	PackageVersion string
 	PackageLicense string
 }

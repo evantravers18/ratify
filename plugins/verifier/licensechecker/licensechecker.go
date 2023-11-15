@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/deislabs/ratify/plugins/verifier/licensechecker/utils"
 
@@ -40,7 +41,30 @@ type PluginInputConfig struct {
 }
 
 func main() {
+	tempValidate()
 	skel.PluginMain("licensechecker", "1.0.0", VerifyReference, []string{"1.0.0"})
+}
+
+func tempValidate() {
+
+	// first read from local file
+	refBlob, _ := os.ReadFile("/home/azureuser/repo/susanFork/ratify/plugins/verifier/licensechecker/.staging/licensechecker/large.spdx")
+	// define disallowed package and disallowed license
+	var disallowedLicenses []string = []string{"LicenseRef-Artistic", "GPL-2.0-only"}
+
+	fmt.Println(disallowedLicenses)
+	// parse the spdx or cyclone dx
+	spdxDoc, err := utils.BlobToSPDX(refBlob)
+	if err != nil {
+		return
+	}
+
+	packageLicenses := utils.GetPackageLicenses(*spdxDoc)
+	fmt.Println(packageLicenses)
+	// detect violation
+	licenseMap := utils.LoadAllowedLicenses(disallowedLicenses)
+	disallowedLicenseDetected := utils.FilterDisallowedLicenses(packageLicenses, licenseMap)
+	fmt.Println(disallowedLicenseDetected)
 }
 
 func parseInput(stdin []byte) (*PluginConfig, error) {

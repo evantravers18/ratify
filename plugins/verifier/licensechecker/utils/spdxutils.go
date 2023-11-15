@@ -31,8 +31,10 @@ func BlobToSPDX(bytes []byte) (*spdx.Document, error) {
 func GetPackageLicenses(doc spdx.Document) []PackageLicense {
 	output := []PackageLicense{}
 	for _, p := range doc.Packages {
+		// TODO: change to a list of license, separate on AND
 		output = append(output, PackageLicense{
 			PackageName:    p.PackageName,
+			PackageVersion: p.PackageVersion,
 			PackageLicense: p.PackageLicenseConcluded,
 		})
 	}
@@ -52,6 +54,17 @@ func FilterPackageLicenses(packageLicenses []PackageLicense, allowedLicenses map
 	for _, packageLicense := range packageLicenses {
 		_, ok := allowedLicenses[packageLicense.PackageLicense]
 		if !ok {
+			output = append(output, packageLicense)
+		}
+	}
+	return output
+}
+
+func FilterDisallowedLicenses(packageLicenses []PackageLicense, disallowed map[string]struct{}) []PackageLicense {
+	var output []PackageLicense
+	for _, packageLicense := range packageLicenses {
+		_, ok := disallowed[packageLicense.PackageLicense]
+		if ok {
 			output = append(output, packageLicense)
 		}
 	}
