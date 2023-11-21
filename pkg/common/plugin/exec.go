@@ -55,6 +55,11 @@ func (e *DefaultExecutor) ExecutePlugin(ctx context.Context, pluginPath string, 
 	c.Stdout = stdout
 	c.Stderr = stderr
 
+	str1 := string(stdinData)
+	logrus.Infof("launching plugin with stdin %s", str1)
+
+	fmt.Println("String =", str1)
+
 	// DEBUG: log the process details used to launch the binary plugin
 	if logrus.IsLevelEnabled(logrus.DebugLevel) {
 		logrus.Debugf("launching plugin %s", pluginPath)

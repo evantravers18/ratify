@@ -36,7 +36,9 @@ import (
 
 // PluginConfig describes the configuration of the sbom verifier
 type PluginConfig struct {
-	Name string `json:"name"`
+	Name               string        `json:"name"`
+	DisallowedLicenses []string      `json:"disallowedLicenses"`
+	DisallowedPackages []PackageInfo `json:"disallowedPackages"`
 }
 
 type PluginInputConfig struct {
@@ -97,7 +99,8 @@ func VerifyReference(args *skel.CmdArgs, subjectReference common.Reference, refe
 
 		switch mediaType {
 		case SpdxJSONMediaType:
-			return processSpdxJSONMediaType(input.Name, refBlob)
+			//return processSpdxJSONMediaType(input.Name, refBlob)
+			return tempValidate(input.Name, refBlob, input.DisallowedLicenses, input.DisallowedPackages)
 		default:
 		}
 	}
@@ -106,6 +109,16 @@ func VerifyReference(args *skel.CmdArgs, subjectReference common.Reference, refe
 		Name:      input.Name,
 		IsSuccess: false,
 		Message:   fmt.Sprintf("Unsupported mediaType: %s", mediaType),
+	}, nil
+}
+func tempValidate(name string, refBlob []byte, disallowedLicenses []string, disallowedPackages []PackageInfo) (*verifier.VerifierResult, error) {
+	var doc *v2_3.Document
+	var test = disallowedPackages[0].Name + ":" + disallowedPackages[0].Version
+	return &verifier.VerifierResult{
+		Name:       name,
+		IsSuccess:  true,
+		Extensions: doc.CreationInfo,
+		Message:    fmt.Sprintf("SBOM disallowed license %v, SBOM disallowed package %v", disallowedLicenses[0], test),
 	}, nil
 }
 
