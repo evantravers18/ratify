@@ -12,3 +12,5 @@ spec:
     disallowedLicenses: 
     - MIT
     - GPL-2.0-only
+    nestedReferences: application/vnd.cncf.notary.signature
+      

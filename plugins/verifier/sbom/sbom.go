@@ -23,7 +23,6 @@ import (
 	"github.com/deislabs/ratify/pkg/common"
 	"github.com/deislabs/ratify/pkg/ocispecs"
 	"github.com/deislabs/ratify/pkg/referrerstore"
-	"github.com/deislabs/ratify/plugins/verifier/licensechecker/utils"
 	spdxUtils "github.com/deislabs/ratify/plugins/verifier/sbom/spdxutils"
 
 	// This import is required to utilize the oras built-in referrer store
@@ -48,7 +47,7 @@ const (
 )
 
 func main() {
-	skel.PluginMain("sbom", "1.0.0", VerifyReference, []string{"1.0.0"})
+	skel.PluginMain("sbom", "0.alpha", VerifyReference, []string{"1.0.0", "2.0.0alpha"})
 }
 
 func parseInput(stdin []byte) (*PluginConfig, error) {
@@ -94,23 +93,32 @@ func VerifyReference(args *skel.CmdArgs, subjectReference common.Reference, refe
 
 		switch mediaType {
 		case SpdxJSONMediaType:
-			//return getViolation(input.Name+string(blobDesc.Digest), refBlob, input.DisallowedLicenses, input.DisallowedPackages)
-			licenseViolation, packageViolation, err := getViolations(refBlob, input.DisallowedLicenses, input.DisallowedPackages)
+			// parse  spdx or cyclone dx
+			spdxDoc, err := spdxUtils.BlobToSPDX(refBlob)
 			if err != nil {
-				return nil, fmt.Errorf("failed to get violation %w", err)
+				return nil, err
+			}
+
+			//return getViolation(input.Name+string(blobDesc.Digest), refBlob, input.DisallowedLicenses, input.DisallowedPackages)
+			packageViolation, licenseViolation, err := getViolations(refBlob, input.DisallowedLicenses, input.DisallowedPackages)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get SBOM violation %w", err)
 			}
 
 			if licenseViolation != nil || packageViolation != nil {
 				return &verifier.VerifierResult{
-					Name:      input.Name + string(blobDesc.Digest),
-					IsSuccess: false,
-					Message:   fmt.Sprintf("SBOM validation failed, violation detected, license '%v', package '%v',", len(licenseViolation), len(packageViolation)),
+					Name:       input.Name,
+					IsSuccess:  false,
+					Extensions: blobDesc.Digest,
+					Message:    fmt.Sprintf("SBOM validation failed, '%v' packages with license violation,  '%v' package with package violation, packages with license violations %v,  packages with violations %v ", len(licenseViolation), len(packageViolation), formatPackageLicense(licenseViolation), formatPackageLicense(packageViolation)),
 				}, err
 			}
+
 			return &verifier.VerifierResult{
-				Name:      input.Name + string(blobDesc.Digest),
-				IsSuccess: true,
-				Message:   "SBOM is good, no violation detected",
+				Name:       input.Name,
+				IsSuccess:  true,
+				Extensions: spdxDoc.CreationInfo,
+				Message:    "SBOM is good, no violation detected",
 			}, err
 
 		default:
@@ -122,20 +130,14 @@ func VerifyReference(args *skel.CmdArgs, subjectReference common.Reference, refe
 		Message:   fmt.Sprintf("SBOM verifier Unsupported mediaType: %s", mediaType),
 	}, nil
 }
-func getViolation(name string, refBlob []byte, disallowedLicenses []string, disallowedPackages []spdxUtils.PackageInfo) (*verifier.VerifierResult, error) {
-	var err error
-	var test = disallowedPackages[0].Name + ":" + disallowedPackages[0].Version
-	spdxDoc, err := spdxUtils.BlobToSPDX(refBlob)
-	if err != nil {
-		return nil, fmt.Errorf("failed BlobToSPDX %w", err)
-	}
 
-	return &verifier.VerifierResult{
-		Name:       name,
-		IsSuccess:  true,
-		Extensions: spdxDoc.CreationInfo,
-		Message:    fmt.Sprintf("SBOM disallowed license1 %v, SBOM disallowed package %v", disallowedLicenses[0], test),
-	}, err
+func formatPackageLicense(packages []spdxUtils.PackageLicense) string {
+	var result = "["
+	for _, p := range packages {
+		result = result + fmt.Sprintf("{PackageName: '%v', PackageVersion: '%v', PackageLicense: '%v' },", p.PackageName, p.PackageVersion, p.PackageLicense)
+	}
+	result += "]"
+	return result
 }
 
 func getViolations(refBlob []byte, disallowedLicenses []string, disallowedPackages []spdxUtils.PackageInfo) ([]spdxUtils.PackageLicense, []spdxUtils.PackageLicense, error) {
@@ -158,11 +160,10 @@ func getViolations(refBlob []byte, disallowedLicenses []string, disallowedPackag
 	//violationLicense := utils.FilterDisallowedLicenses(packageLicenses, licenseMap)
 	return packageViolation, licenseViolation, nil
 }
-
 func processSpdxJSONMediaType(name string, refBlob []byte) (*verifier.VerifierResult, error) {
 	var err error
 
-	spdxDoc, err := utils.BlobToSPDX(refBlob)
+	spdxDoc, err := spdxUtils.BlobToSPDX(refBlob)
 	if err != nil {
 		return &verifier.VerifierResult{
 			Name:       name,

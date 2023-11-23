@@ -18,6 +18,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	spdxUtils "github.com/deislabs/ratify/plugins/verifier/sbom/spdxutils"
 )
 
 func TestProcessSPDXJsonMediaType(t *testing.T) {
@@ -41,6 +43,22 @@ func TestProcessInvalidSPDXJsonMediaType(t *testing.T) {
 	}
 	_, err = processSpdxJSONMediaType("test", b)
 	if err == nil {
+		t.Fatalf("expected to have an error processing spdx json file: %s", filepath.Join("testdata", "bom.json"))
+	}
+}
+
+func TestFormatPackageLicense(t *testing.T) {
+	bash := spdxUtils.PackageLicense{
+		PackageName:    "bash",
+		PackageLicense: "License",
+		PackageVersion: "4.4.18-2ubuntu1.2",
+	}
+
+	testdata := []spdxUtils.PackageLicense{bash}
+
+	result :=
+		formatPackageLicense(testdata)
+	if result == "nil" {
 		t.Fatalf("expected to have an error processing spdx json file: %s", filepath.Join("testdata", "bom.json"))
 	}
 }
