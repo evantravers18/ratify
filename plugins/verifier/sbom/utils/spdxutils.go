@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package spdxUtils
+package utils
 
 import (
 	"strings"
@@ -22,16 +22,31 @@ import (
 	"github.com/spdx/tools-golang/tagvalue"
 )
 
+var AndLicense = "AND"
+var OrLicense = "OR"
+
+// returns a spdxDocument and error
 func BlobToSPDX(bytes []byte) (*spdx.Document, error) {
 	raw := string(bytes)
 	reader := strings.NewReader(raw)
 	return tagvalue.Read(reader)
 }
 
-// return the array of license fom a license expression
+// return the array of license fom a license expression, ONLY , AND and OR is supported
+// We don't support ()
 func GetLicensesFromExpression(licenseExpression string) []string {
 	var result []string
-	licenses := strings.Split(licenseExpression, "AND")
+
+	// https://spdx.github.io/spdx-spec/v2-draft/SPDX-license-expressions/#d3-simple-license-expressions
+	// more examples at https://github.com/spdx/spdx-examples/blob/master/software/example7/spdx2.2/example7-golang.spdx.json
+
+	// replace OR with AND , since we can't predict which license can be used
+	licenseExpression = strings.Replace(licenseExpression, OrLicense, AndLicense, -1)
+
+	// replace OR with AND
+	licenseExpression = strings.Replace(licenseExpression, OrLicense, AndLicense, -1)
+
+	licenses := strings.Split(licenseExpression, AndLicense)
 	for i := range licenses {
 		license := strings.TrimSpace(licenses[i])
 		if license != "" {
@@ -41,6 +56,7 @@ func GetLicensesFromExpression(licenseExpression string) []string {
 	return result
 }
 
+// Create a package set from spdxDoc
 func GetPackages(doc spdx.Document) map[PackageInfo]struct{} {
 	output := map[PackageInfo]struct{}{}
 	for _, p := range doc.Packages {
@@ -55,11 +71,10 @@ func GetPackages(doc spdx.Document) map[PackageInfo]struct{} {
 	return output
 }
 
+// Get the packageLicense array from spdxDoc, TODO, why do we have both license and licenses?
 func GetPackageLicenses(doc spdx.Document) []PackageLicense {
 	output := []PackageLicense{}
 	for _, p := range doc.Packages {
-
-		// TODO: change to a list of license, separate on AND
 		output = append(output, PackageLicense{
 			PackageName:     p.PackageName,
 			PackageVersion:  p.PackageVersion,
@@ -87,39 +102,28 @@ func LoadPackagesMap(packages []PackageInfo) map[PackageInfo]struct{} {
 	return output
 }
 
-func FilterPackageLicenses(packageLicenses []PackageLicense, allowedLicenses map[string]struct{}) []PackageLicense {
-	var output []PackageLicense
-	for _, packageLicense := range packageLicenses {
-		_, ok := allowedLicenses[packageLicense.PackageLicense]
-		if !ok {
-			output = append(output, packageLicense)
-		}
-	}
-	return output
-}
-
 // returns package in violation
-func FilterDisallowedPackages(packageLicenses []PackageLicense, disallowedLicense map[string]struct{}, disallowedPackage map[PackageInfo]struct{}) ([]PackageLicense, []PackageLicense) {
+func FilterDisallowedPackages(packageLicenses []PackageLicense, disallowedLicense []string, disallowedPackage map[PackageInfo]struct{}) ([]PackageLicense, []PackageLicense) {
 	var violationLicense []PackageLicense
 	var violationPackage []PackageLicense
 
-	for _, packageLicense := range packageLicenses {
-		for _, license := range packageLicense.PackageLicenses {
-			// license check
-			_, ok := disallowedLicense[license]
-			if ok {
-				violationLicense = append(violationLicense, packageLicense)
+	for _, packageInfo := range packageLicenses {
+
+		for _, disallowed := range disallowedLicense {
+			license := packageInfo.PackageLicense
+			if license != "" && strings.Contains(packageInfo.PackageLicense, disallowed) {
+				violationLicense = append(violationLicense, packageInfo)
 			}
 		}
 
 		// package check
 		current := PackageInfo{
-			Name:    packageLicense.PackageName,
-			Version: packageLicense.PackageVersion,
+			Name:    packageInfo.PackageName,
+			Version: packageInfo.PackageVersion,
 		}
 		_, ok := disallowedPackage[current]
 		if ok {
-			violationPackage = append(violationPackage, packageLicense)
+			violationPackage = append(violationPackage, packageInfo)
 		}
 	}
 	return violationLicense, violationPackage

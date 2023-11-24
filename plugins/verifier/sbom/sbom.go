@@ -23,7 +23,9 @@ import (
 	"github.com/deislabs/ratify/pkg/common"
 	"github.com/deislabs/ratify/pkg/ocispecs"
 	"github.com/deislabs/ratify/pkg/referrerstore"
-	spdxUtils "github.com/deislabs/ratify/plugins/verifier/sbom/spdxutils"
+	"github.com/deislabs/ratify/plugins/verifier/sbom/utils"
+
+	"github.com/spdx/tools-golang/spdx"
 
 	// This import is required to utilize the oras built-in referrer store
 	_ "github.com/deislabs/ratify/pkg/referrerstore/oras"
@@ -33,9 +35,9 @@ import (
 
 // PluginConfig describes the configuration of the sbom verifier
 type PluginConfig struct {
-	Name               string                  `json:"name"`
-	DisallowedLicenses []string                `json:"disallowedLicenses"`
-	DisallowedPackages []spdxUtils.PackageInfo `json:"disallowedPackages"`
+	Name               string              `json:"name"`
+	DisallowedLicenses []string            `json:"disallowedLicenses"`
+	DisallowedPackages []utils.PackageInfo `json:"disallowedPackages"`
 }
 
 type PluginInputConfig struct {
@@ -47,7 +49,7 @@ const (
 )
 
 func main() {
-	skel.PluginMain("sbom", "0.alpha", VerifyReference, []string{"1.0.0", "2.0.0alpha"})
+	skel.PluginMain("sbom", "2.0.0alpha", VerifyReference, []string{"1.0.0", "2.0.0alpha"})
 }
 
 func parseInput(stdin []byte) (*PluginConfig, error) {
@@ -93,14 +95,13 @@ func VerifyReference(args *skel.CmdArgs, subjectReference common.Reference, refe
 
 		switch mediaType {
 		case SpdxJSONMediaType:
-			// parse  spdx or cyclone dx
-			spdxDoc, err := spdxUtils.BlobToSPDX(refBlob)
+			// TODO support cyclone dx
+			spdxDoc, err := utils.BlobToSPDX(refBlob)
 			if err != nil {
 				return nil, err
 			}
 
-			//return getViolation(input.Name+string(blobDesc.Digest), refBlob, input.DisallowedLicenses, input.DisallowedPackages)
-			packageViolation, licenseViolation, err := getViolations(refBlob, input.DisallowedLicenses, input.DisallowedPackages)
+			packageViolation, licenseViolation, err := getViolations(spdxDoc, input.DisallowedLicenses, input.DisallowedPackages)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get SBOM violation %w", err)
 			}
@@ -131,7 +132,7 @@ func VerifyReference(args *skel.CmdArgs, subjectReference common.Reference, refe
 	}, nil
 }
 
-func formatPackageLicense(packages []spdxUtils.PackageLicense) string {
+func formatPackageLicense(packages []utils.PackageLicense) string {
 	var result = "["
 	for _, p := range packages {
 		result = result + fmt.Sprintf("{PackageName: '%v', PackageVersion: '%v', PackageLicense: '%v' },", p.PackageName, p.PackageVersion, p.PackageLicense)
@@ -140,30 +141,21 @@ func formatPackageLicense(packages []spdxUtils.PackageLicense) string {
 	return result
 }
 
-func getViolations(refBlob []byte, disallowedLicenses []string, disallowedPackages []spdxUtils.PackageInfo) ([]spdxUtils.PackageLicense, []spdxUtils.PackageLicense, error) {
-	// first read from local file
+func getViolations(spdxDoc *spdx.Document, disallowedLicenses []string, disallowedPackages []utils.PackageInfo) ([]utils.PackageLicense, []utils.PackageLicense, error) {
 
-	// parse  spdx or cyclone dx
-	spdxDoc, err := spdxUtils.BlobToSPDX(refBlob)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// build the internal data structures
-
-	packageLicenses := spdxUtils.GetPackageLicenses(*spdxDoc)
-	licenseMap := spdxUtils.LoadLicensesMap(disallowedLicenses)
-	packageMap := spdxUtils.LoadPackagesMap(disallowedPackages)
+	packageLicenses := utils.GetPackageLicenses(*spdxDoc)
+	//licenseMap := utils.LoadLicensesMap(disallowedLicenses)
+	packageMap := utils.LoadPackagesMap(disallowedPackages)
 
 	// detect violation
-	licenseViolation, packageViolation := spdxUtils.FilterDisallowedPackages(packageLicenses, licenseMap, packageMap)
-	//violationLicense := utils.FilterDisallowedLicenses(packageLicenses, licenseMap)
+	licenseViolation, packageViolation := utils.FilterDisallowedPackages(packageLicenses, disallowedLicenses, packageMap)
 	return packageViolation, licenseViolation, nil
 }
+
 func processSpdxJSONMediaType(name string, refBlob []byte) (*verifier.VerifierResult, error) {
 	var err error
 
-	spdxDoc, err := spdxUtils.BlobToSPDX(refBlob)
+	spdxDoc, err := utils.BlobToSPDX(refBlob)
 	if err != nil {
 		return &verifier.VerifierResult{
 			Name:       name,

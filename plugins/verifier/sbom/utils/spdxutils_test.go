@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package spdxUtils
+package utils
 
 import (
 	"testing"
@@ -83,34 +83,30 @@ func TestLoadAllowedLicenses(t *testing.T) {
 	}
 }
 
-func TestFilterPackageLicenses(t *testing.T) {
-	spdxDoc, err := BlobToSPDX(spdxTestBytes)
-	if err != nil {
-		t.Fatalf("could not parse SPDX doc from bytes")
-	}
-	PackageLicenses := GetPackageLicenses(*spdxDoc)
-	filterLicenses := LoadLicensesMap([]string{"GPL-2.0-only"})
-	result := FilterPackageLicenses(PackageLicenses, filterLicenses)
-	if len(result) != 0 {
-		t.Fatalf("License not filtered correctly")
-	}
-}
-
-func TestGetLicensesFromExpress(t *testing.T) {
+func TestGetLicensesFromExpression(t *testing.T) {
 	cases := []struct {
+		description    string
 		license        string
 		expectedResult []string
 	}{
 		{
+			description:    "Expression with LicenseRef-AND",
 			license:        "BSD-2-Clause AND LicenseRef-AND AND BSD-3-Clause",
 			expectedResult: []string{"BSD-2-Clause", "LicenseRef-", "BSD-3-Clause"},
 		},
 		{
+			description:    "single license",
 			license:        "GPL-2.0-only",
 			expectedResult: []string{"GPL-2.0-only"},
 		},
 		{
+			description:    "Long expression",
 			license:        "MIT AND LicenseRef-AND AND BSD-2-Clause AND LicenseRef-AND AND GPL-2.0-or-later",
+			expectedResult: []string{"MIT", "LicenseRef-", "BSD-2-Clause", "LicenseRef-", "GPL-2.0-or-later"},
+		},
+		{
+			description:    "OR is treated as AND",
+			license:        "MIT OR GPL-2.0-or-later",
 			expectedResult: []string{"MIT", "LicenseRef-", "BSD-2-Clause", "LicenseRef-", "GPL-2.0-or-later"},
 		},
 	}
