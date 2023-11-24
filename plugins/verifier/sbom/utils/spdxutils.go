@@ -111,6 +111,7 @@ func FilterDisallowedPackages(packageLicenses []PackageLicense, disallowedLicens
 
 		for _, disallowed := range disallowedLicense {
 			license := packageInfo.PackageLicense
+			// TODO : do a to lower comparison since license check is case insensitive
 			if license != "" && strings.Contains(packageInfo.PackageLicense, disallowed) {
 				violationLicense = append(violationLicense, packageInfo)
 			}
