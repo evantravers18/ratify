@@ -109,6 +109,11 @@ func TestGetLicensesFromExpression(t *testing.T) {
 			license:        "MIT OR GPL-2.0-or-later",
 			expectedResult: []string{"MIT", "LicenseRef-", "BSD-2-Clause", "LicenseRef-", "GPL-2.0-or-later"},
 		},
+		{
+			description:    "WITH is treated as AND",
+			license:        "MIT OR GPL-2.0-or-later",
+			expectedResult: []string{"MIT", "LicenseRef-", "BSD-2-Clause", "LicenseRef-", "GPL-2.0-or-later"},
+		},
 	}
 
 	for _, tc := range cases {
