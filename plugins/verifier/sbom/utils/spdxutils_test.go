@@ -74,60 +74,6 @@ func TestGetPackageLicenses(t *testing.T) {
 	}
 }
 
-func TestLoadAllowedLicenses(t *testing.T) {
-	license := "GPL-2.0-only"
-	licenses := LoadLicensesMap([]string{license})
-	_, ok := licenses[license]
-	if !ok {
-		t.Fatalf("expected license but not present")
-	}
-}
-
-func TestGetLicensesFromExpression(t *testing.T) {
-	cases := []struct {
-		description    string
-		license        string
-		expectedResult []string
-	}{
-		{
-			description:    "Expression with LicenseRef-AND",
-			license:        "BSD-2-Clause AND LicenseRef-AND AND BSD-3-Clause",
-			expectedResult: []string{"BSD-2-Clause", "LicenseRef-", "BSD-3-Clause"},
-		},
-		{
-			description:    "single license",
-			license:        "GPL-2.0-only",
-			expectedResult: []string{"GPL-2.0-only"},
-		},
-		{
-			description:    "Long expression",
-			license:        "MIT AND LicenseRef-AND AND BSD-2-Clause AND LicenseRef-AND AND GPL-2.0-or-later",
-			expectedResult: []string{"MIT", "LicenseRef-", "BSD-2-Clause", "LicenseRef-", "GPL-2.0-or-later"},
-		},
-		{
-			description:    "OR is treated as AND",
-			license:        "MIT OR GPL-2.0-or-later",
-			expectedResult: []string{"MIT", "LicenseRef-", "BSD-2-Clause", "LicenseRef-", "GPL-2.0-or-later"},
-		},
-		{
-			description:    "WITH is treated as AND",
-			license:        "MIT OR GPL-2.0-or-later",
-			expectedResult: []string{"MIT", "LicenseRef-", "BSD-2-Clause", "LicenseRef-", "GPL-2.0-or-later"},
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run("test scenario", func(t *testing.T) {
-
-			result := GetLicensesFromExpression(tc.license)
-			if !ArrayEqual(result, tc.expectedResult) {
-				t.Fatalf("expected: %v, got: %v", tc.expectedResult, result)
-			}
-		})
-	}
-
-}
-
 func ArrayEqual(a, b []string) bool {
 	if len(a) != len(b) {
 		return false

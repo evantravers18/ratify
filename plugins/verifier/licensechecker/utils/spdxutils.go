@@ -28,61 +28,21 @@ func BlobToSPDX(bytes []byte) (*spdx.Document, error) {
 	return tagvalue.Read(reader)
 }
 
-// return the array of license fom a license expression
-func GetLicensesFromExpression(licenseExpression string) []string {
-	var result []string
-	licenses := strings.Split(licenseExpression, "AND")
-	for i := range licenses {
-		license := strings.TrimSpace(licenses[i])
-		if license != "" {
-			result = append(result, license)
-		}
-	}
-	return result
-}
-
-func GetPackages(doc spdx.Document) map[Package]struct{} {
-	output := map[Package]struct{}{}
-	for _, p := range doc.Packages {
-
-		temp := Package{
-			PackageName:    p.PackageName,
-			PackageVersion: p.PackageVersion,
-		}
-		output[temp] = struct{}{}
-
-	}
-	return output
-}
-
 func GetPackageLicenses(doc spdx.Document) []PackageLicense {
 	output := []PackageLicense{}
 	for _, p := range doc.Packages {
-
-		// TODO: change to a list of license, separate on AND
 		output = append(output, PackageLicense{
-			PackageName:     p.PackageName,
-			PackageVersion:  p.PackageVersion,
-			PackageLicense:  p.PackageLicenseConcluded,
-			PackageLicenses: GetLicensesFromExpression(p.PackageLicenseConcluded),
+			PackageName:    p.PackageName,
+			PackageLicense: p.PackageLicenseConcluded,
 		})
 	}
 	return output
 }
 
-func LoadLicensesMap(licenses []string) map[string]struct{} {
+func LoadAllowedLicenses(licenses []string) map[string]struct{} {
 	output := map[string]struct{}{}
 	for _, license := range licenses {
 		output[license] = struct{}{}
-	}
-	return output
-}
-
-func LoadPackagesMap(packages []Package) map[Package]struct{} {
-	output := map[Package]struct{}{}
-	for _, item := range packages {
-
-		output[item] = struct{}{}
 	}
 	return output
 }
@@ -96,31 +56,4 @@ func FilterPackageLicenses(packageLicenses []PackageLicense, allowedLicenses map
 		}
 	}
 	return output
-}
-
-// returns package in violation
-func FilterDisallowedPackages(packageLicenses []PackageLicense, disallowedLicense map[string]struct{}, disallowedPackage map[Package]struct{}) ([]PackageLicense, []PackageLicense) {
-	var violationLicense []PackageLicense
-	var violationPackage []PackageLicense
-
-	for _, packageLicense := range packageLicenses {
-		for _, license := range packageLicense.PackageLicenses {
-			// license check
-			_, ok := disallowedLicense[license]
-			if ok {
-				violationLicense = append(violationLicense, packageLicense)
-			}
-		}
-
-		// package check
-		current := Package{
-			PackageName:    packageLicense.PackageName,
-			PackageVersion: packageLicense.PackageVersion,
-		}
-		_, ok := disallowedPackage[current]
-		if ok {
-			violationPackage = append(violationPackage, packageLicense)
-		}
-	}
-	return violationLicense, violationPackage
 }

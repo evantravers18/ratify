@@ -19,7 +19,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/deislabs/ratify/plugins/verifier/licensechecker/utils"
 
@@ -41,41 +40,7 @@ type PluginInputConfig struct {
 }
 
 func main() {
-	refBlob, _ := os.ReadFile("/home/azureuser/repo/susanFork/ratify/plugins/verifier/licensechecker/.staging/licensechecker/large.spdx")
-	bash := utils.Package{
-		PackageName:    "bash",
-		PackageVersion: "4.4.18-2ubuntu1.2",
-	}
-
-	// define disallowed package and disallowed license
-	var disallowedLicenses []string = []string{"LicenseRef-Artistic", "GPL-2.0-only"}
-	var disallowedPackages []utils.Package = []utils.Package{bash}
-
-	tempValidate(refBlob, disallowedLicenses, disallowedPackages)
 	skel.PluginMain("licensechecker", "1.0.0", VerifyReference, []string{"1.0.0"})
-}
-
-func tempValidate(refBlob []byte, disallowedLicenses []string, disallowedPackages []utils.Package) ([]utils.PackageLicense, []utils.PackageLicense, error) {
-	// first read from local file
-
-	// parse  spdx or cyclone dx
-	spdxDoc, err := utils.BlobToSPDX(refBlob)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// build the internal data structures
-	//packages := utils.GetPackages(*spdxDoc)
-	packageLicenses := utils.GetPackageLicenses(*spdxDoc)
-	licenseMap := utils.LoadLicensesMap(disallowedLicenses)
-	packageMap := utils.LoadPackagesMap(disallowedPackages)
-
-	// detect violation
-	licenseViolation, packageViolation := utils.FilterDisallowedPackages(packageLicenses, licenseMap, packageMap)
-	//violationLicense := utils.FilterDisallowedLicenses(packageLicenses, licenseMap)
-	fmt.Println(packageViolation)
-	fmt.Println(licenseViolation)
-	return packageViolation, licenseViolation, nil
 }
 
 func parseInput(stdin []byte) (*PluginConfig, error) {
@@ -94,7 +59,7 @@ func VerifyReference(args *skel.CmdArgs, subjectReference common.Reference, desc
 		return nil, err
 	}
 
-	allowedLicenses := utils.LoadLicensesMap(input.AllowedLicenses)
+	allowedLicenses := utils.LoadAllowedLicenses(input.AllowedLicenses)
 
 	ctx := context.Background()
 	referenceManifest, err := store.GetReferenceManifest(ctx, subjectReference, descriptor)

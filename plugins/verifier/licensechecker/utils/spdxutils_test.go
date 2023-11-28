@@ -15,9 +15,7 @@ limitations under the License.
 
 package utils
 
-import (
-	"testing"
-)
+import "testing"
 
 var spdxTestBytes = []byte("" +
 	"SPDXVersion: SPDX-2.2\n" +
@@ -76,7 +74,7 @@ func TestGetPackageLicenses(t *testing.T) {
 
 func TestLoadAllowedLicenses(t *testing.T) {
 	license := "GPL-2.0-only"
-	licenses := LoadLicensesMap([]string{license})
+	licenses := LoadAllowedLicenses([]string{license})
 	_, ok := licenses[license]
 	if !ok {
 		t.Fatalf("expected license but not present")
@@ -89,52 +87,9 @@ func TestFilterPackageLicenses(t *testing.T) {
 		t.Fatalf("could not parse SPDX doc from bytes")
 	}
 	PackageLicenses := GetPackageLicenses(*spdxDoc)
-	filterLicenses := LoadLicensesMap([]string{"GPL-2.0-only"})
+	filterLicenses := LoadAllowedLicenses([]string{"GPL-2.0-only"})
 	result := FilterPackageLicenses(PackageLicenses, filterLicenses)
 	if len(result) != 0 {
 		t.Fatalf("License not filtered correctly")
 	}
-}
-
-func TestGetLicensesFromExpress(t *testing.T) {
-	cases := []struct {
-		license        string
-		expectedResult []string
-	}{
-		{
-			license:        "BSD-2-Clause AND LicenseRef-AND AND BSD-3-Clause",
-			expectedResult: []string{"BSD-2-Clause", "LicenseRef-", "BSD-3-Clause"},
-		},
-		{
-			license:        "GPL-2.0-only",
-			expectedResult: []string{"GPL-2.0-only"},
-		},
-		{
-			license:        "MIT AND LicenseRef-AND AND BSD-2-Clause AND LicenseRef-AND AND GPL-2.0-or-later",
-			expectedResult: []string{"MIT", "LicenseRef-", "BSD-2-Clause", "LicenseRef-", "GPL-2.0-or-later"},
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run("test scenario", func(t *testing.T) {
-
-			result := GetLicensesFromExpression(tc.license)
-			if !ArrayEqual(result, tc.expectedResult) {
-				t.Fatalf("expected: %v, got: %v", tc.expectedResult, result)
-			}
-		})
-	}
-
-}
-
-func ArrayEqual(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
-	}
-	return true
 }

@@ -16,10 +16,9 @@ limitations under the License.
 package utils
 
 type PackageLicense struct {
-	PackageName     string
-	PackageVersion  string
-	PackageLicense  string
-	PackageLicenses []string
+	PackageName    string
+	PackageVersion string
+	PackageLicense string
 }
 
 type PackageInfo struct {
