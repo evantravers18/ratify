@@ -43,6 +43,17 @@ var spdxTestBytes = []byte("" +
 	"FilesAnalyzed: false\n" +
 	"PackageLicenseConcluded: GPL-2.0-only\n" +
 	"PackageLicenseDeclared: GPL-2.0-only\n" +
+	"PackageCopyrightText: NOASSERTION\n" +
+	"\n" +
+	"##### Package: test-baselayout3\n" +
+	"\n" +
+	"PackageName: test-baselayout3\n" +
+	"SPDXID: SPDXRef-Package-apk-test-baselayout3\n" +
+	"PackageVersion: 1.1.1-r3\n" +
+	"PackageDownloadLocation: NOASSERTION\n" +
+	"FilesAnalyzed: false\n" +
+	"PackageLicenseConcluded: LGPL-2.1-only AND MIT AND BSD-2-Clause\n" +
+	"PackageLicenseDeclared: LGPL-2.1-only AND MIT AND BSD-2-Clause\n" +
 	"PackageCopyrightText: NOASSERTION\n")
 
 func TestProcessSPDXJsonMediaType(t *testing.T) {
@@ -99,6 +110,17 @@ func TestGetViolations(t *testing.T) {
 		PackageVersion: "1.1.1-r1",
 	}
 
+	violation2 := utils.PackageLicense{
+		PackageName:    "test-baselayout3",
+		PackageLicense: "LGPL-2.1-only AND MIT AND BSD-2-Clause",
+		PackageVersion: "1.1.1-r3",
+	}
+
+	baselayoutr2 := utils.PackageInfo{
+		Name:    "test-baselayout",
+		Version: "1.1.1-r2",
+	}
+
 	spdxDoc, _ := utils.BlobToSPDX(spdxTestBytes)
 
 	cases := []struct {
@@ -107,27 +129,66 @@ func TestGetViolations(t *testing.T) {
 		disallowedPackages        []utils.PackageInfo
 		expectedLicenseViolations []utils.PackageLicense
 		expectedPackageViolations []utils.PackageLicense
+		enabled                   bool
 	}{
 		{
-			description:               "package violation found",
+			description:               "package and license violation found",
 			disallowedLicenses:        []string{"LicenseRef-Artistic", "GPL-2.0-only"},
 			disallowedPackages:        []utils.PackageInfo{baselayout},
 			expectedLicenseViolations: []utils.PackageLicense{violation},
 			expectedPackageViolations: []utils.PackageLicense{violation},
 		},
+		{
+			description:               "license violation with simple license expressions",
+			disallowedLicenses:        []string{"LGPL-2.1-only"},
+			disallowedPackages:        []utils.PackageInfo{},
+			expectedLicenseViolations: []utils.PackageLicense{violation2},
+			expectedPackageViolations: []utils.PackageLicense{},
+		},
+		{
+			description:               "license violation case insensitive",
+			disallowedLicenses:        []string{"lgpl-2.1-only"},
+			disallowedPackages:        []utils.PackageInfo{},
+			expectedLicenseViolations: []utils.PackageLicense{violation2},
+			expectedPackageViolations: []utils.PackageLicense{},
+		},
+		{
+			description:               "package violation not found",
+			disallowedLicenses:        []string{},
+			disallowedPackages:        []utils.PackageInfo{baselayoutr2},
+			expectedLicenseViolations: []utils.PackageLicense{},
+			expectedPackageViolations: []utils.PackageLicense{},
+			enabled:                   true,
+		},
+		{
+			description:               "license violation not found",
+			disallowedLicenses:        []string{"GPL-3.0-only"},
+			disallowedPackages:        []utils.PackageInfo{},
+			expectedLicenseViolations: []utils.PackageLicense{},
+			expectedPackageViolations: []utils.PackageLicense{},
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run("test scenario", func(t *testing.T) {
+
 			packageViolation, licensesViolation, _ := getViolations(spdxDoc, tc.disallowedLicenses, tc.disallowedPackages)
+
+			if len(tc.expectedPackageViolations) != len(packageViolation) {
+				t.Fatalf("Test %s failed. Expected len of expectedPackageViolations %v, got: %v", tc.description, len(tc.expectedPackageViolations), len(packageViolation))
+			}
+
+			if len(tc.expectedLicenseViolations) != len(licensesViolation) {
+				t.Fatalf("Test %s failed. Expected len of expectedLicenseViolations %v, got: %v", tc.description, len(tc.expectedPackageViolations), len(packageViolation))
+			}
 
 			// check if packageViolation equals expectedPackageViolations
 			for i, packageInfo := range packageViolation {
 				if packageInfo.PackageName != tc.expectedPackageViolations[i].PackageName {
-					t.Fatalf("expected: %s, got: %s", packageInfo.PackageName, tc.expectedPackageViolations[i].PackageName)
+					t.Fatalf("Test %s failed. Expected: %s, got: %s", tc.description, packageInfo.PackageName, tc.expectedPackageViolations[i].PackageName)
 				}
 				if packageInfo.PackageVersion != tc.expectedPackageViolations[i].PackageVersion {
-					t.Fatalf("expected: %s, got: %s", packageInfo.PackageVersion, tc.expectedPackageViolations[i].PackageVersion)
+					t.Fatalf("Test %s Failed. expected: %s, got: %s", tc.description, packageInfo.PackageVersion, tc.expectedPackageViolations[i].PackageVersion)
 				}
 			}
 
@@ -146,16 +207,4 @@ func TestGetViolations(t *testing.T) {
 
 		})
 	}
-
-	// test scenarios:
-	// packages
-	// 1. found
-	// 2. not found
-	// 3. same package name but different versions, found and not found
-
-	// license
-	// 1. found
-	// 2. not
-	// 3. try a lower case since License is not case sensitive
-	// 3. try a non basic license experession
 }
