@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -26,13 +27,13 @@ import (
 	"github.com/deislabs/ratify/pkg/referrerstore"
 	"github.com/deislabs/ratify/plugins/verifier/sbom/utils"
 
-	"github.com/spdx/tools-golang/spdx"
-	"github.com/spdx/tools-golang/spdx/v2/v2_3"
-
 	// This import is required to utilize the oras built-in referrer store
 	_ "github.com/deislabs/ratify/pkg/referrerstore/oras"
 	"github.com/deislabs/ratify/pkg/verifier"
 	"github.com/deislabs/ratify/pkg/verifier/plugin/skel"
+	jsonLoader "github.com/spdx/tools-golang/json"
+	"github.com/spdx/tools-golang/spdx"
+	"github.com/spdx/tools-golang/spdx/v2/v2_3"
 )
 
 // PluginConfig describes the configuration of the sbom verifier
@@ -65,7 +66,6 @@ func parseInput(stdin []byte) (*PluginConfig, error) {
 }
 
 func VerifyReference(args *skel.CmdArgs, subjectReference common.Reference, referenceDescriptor ocispecs.ReferenceDescriptor, referrerStore referrerstore.ReferrerStore) (*verifier.VerifierResult, error) {
-
 	input, err := parseInput(args.StdinData)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,6 @@ func VerifyReference(args *skel.CmdArgs, subjectReference common.Reference, refe
 	var mediaType string
 	for _, blobDesc := range referenceManifest.Blobs {
 		mediaType = blobDesc.MediaType
-
 		refBlob, err := referrerStore.GetBlobContent(ctx, subjectReference, blobDesc.Digest)
 
 		if err != nil {
@@ -97,40 +96,15 @@ func VerifyReference(args *skel.CmdArgs, subjectReference common.Reference, refe
 
 		switch mediaType {
 		case SpdxJSONMediaType:
-			// TODO support cyclone dx
-			spdxDoc, err := utils.BlobToSPDX(refBlob)
-			if err != nil {
-				return nil, err
-			}
-
-			packageViolation, licenseViolation, err := getViolations(spdxDoc, input.DisallowedLicenses, input.DisallowedPackages)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get SBOM violation %w", err)
-			}
-
-			if licenseViolation != nil || packageViolation != nil {
-				return &verifier.VerifierResult{
-					Name:       input.Name,
-					IsSuccess:  false,
-					Extensions: blobDesc.Digest,
-					Message:    fmt.Sprintf("SBOM validation failed, '%v' packages with license violation,  '%v' package with package violation, packages with license violations %v,  packages with violations %v ", len(licenseViolation), len(packageViolation), formatPackageLicense(licenseViolation), formatPackageLicense(packageViolation)),
-				}, err
-			}
-
-			return &verifier.VerifierResult{
-				Name:       input.Name,
-				IsSuccess:  true,
-				Extensions: spdxDoc.CreationInfo,
-				Message:    "SBOM is good, no violation detected",
-			}, err
-
+			return processSpdxJSONMediaType(input.Name, refBlob, input.DisallowedLicenses, input.DisallowedPackages)
 		default:
 		}
 	}
+
 	return &verifier.VerifierResult{
 		Name:      input.Name,
 		IsSuccess: false,
-		Message:   fmt.Sprintf("SBOM verifier Unsupported mediaType: %s", mediaType),
+		Message:   fmt.Sprintf("Unsupported mediaType: %s", mediaType),
 	}, nil
 }
 
@@ -154,18 +128,34 @@ func getViolations(spdxDoc *spdx.Document, disallowedLicenses []string, disallow
 	return packageViolation, licenseViolation, nil
 }
 
-func processSpdxJSONMediaType(name string, refBlob []byte) (*verifier.VerifierResult, error) {
+func processSpdxJSONMediaType(name string, refBlob []byte, disallowedLicenses []string, disallowedPackages []utils.PackageInfo) (*verifier.VerifierResult, error) {
 	var err error
 	var spdxDoc *v2_3.Document
-	if spdxDoc, err = utils.BlobToSPDX(refBlob); err == nil {
+	if spdxDoc, err = jsonLoader.Read(bytes.NewReader(refBlob)); spdxDoc != nil {
+
+		if len(disallowedLicenses) != 0 || len(disallowedPackages) != 0 {
+			packageViolation, licenseViolation, err := getViolations(spdxDoc, disallowedLicenses, disallowedPackages)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get SBOM violation %w", err)
+			}
+
+			if licenseViolation != nil || packageViolation != nil {
+				return &verifier.VerifierResult{
+					Name:      name,
+					IsSuccess: false,
+					//Extensions: blobDesc.Digest,
+					Message: fmt.Sprintf("SBOM validation failed, '%v' packages with license violation,  '%v' package with package violation, packages with license violations %v,  packages with violations %v ", len(licenseViolation), len(packageViolation), formatPackageLicense(licenseViolation), formatPackageLicense(packageViolation)),
+				}, err
+			}
+		}
+
 		return &verifier.VerifierResult{
 			Name:       name,
 			IsSuccess:  true,
 			Extensions: spdxDoc.CreationInfo,
 			Message:    "SBOM verification success. The schema is good.",
-		}, nil
+		}, err
 	}
-
 	return &verifier.VerifierResult{
 		Name:      name,
 		IsSuccess: false,
