@@ -121,15 +121,25 @@ func formatPackageLicense(packages []utils.PackageLicense) string {
 
 // getViolations returns the package and license violations based on the deny list
 func getViolations(spdxDoc *spdx.Document, disallowedLicenses []string, disallowedPackages []utils.PackageInfo) ([]utils.PackageLicense, []utils.PackageLicense, error) {
-
 	packageLicenses := utils.GetPackageLicenses(*spdxDoc)
-	packageMap := utils.LoadPackagesMap(disallowedPackages)
+	// load disallowed packageInfo into a map for easier existence check
+	packageMap := loadPackagesMap(disallowedPackages)
 
 	// detect violation
 	licenseViolation, packageViolation := filterDisallowedPackages(packageLicenses, disallowedLicenses, packageMap)
 	return packageViolation, licenseViolation, nil
 }
 
+// load disallowed packageInfo into a map for easier existence check
+func loadPackagesMap(packages []utils.PackageInfo) map[utils.PackageInfo]struct{} {
+	output := map[utils.PackageInfo]struct{}{}
+	for _, item := range packages {
+		output[item] = struct{}{}
+	}
+	return output
+}
+
+// parse through the spdx blob and returns the verifier result
 func processSpdxJSONMediaType(name string, refBlob []byte, disallowedLicenses []string, disallowedPackages []utils.PackageInfo) (*verifier.VerifierResult, error) {
 	var err error
 	var spdxDoc *v2_3.Document
@@ -149,7 +159,7 @@ func processSpdxJSONMediaType(name string, refBlob []byte, disallowedLicenses []
 						LicenseViolation: licenseViolation,
 						PackageViolation: packageViolation,
 					},
-					Message: fmt.Sprintf("SBOM validation failed, '%v' packages with license violation,  '%v' package with package violation, packages with license violations %v,  packages with violations %v ", len(licenseViolation), len(packageViolation), formatPackageLicense(licenseViolation), formatPackageLicense(packageViolation)),
+					Message: fmt.Sprintf("SBOM validation failed"),
 				}, err
 			}
 		}
@@ -178,7 +188,6 @@ func filterDisallowedPackages(packageLicenses []utils.PackageLicense, disallowed
 		// if license contains disallowed, add to violation
 		for _, disallowed := range disallowedLicense {
 			license := packageInfo.PackageLicense
-
 			if license != "" && strings.Contains(strings.ToLower(license), strings.ToLower(disallowed)) {
 				violationLicense = append(violationLicense, packageInfo)
 			}
