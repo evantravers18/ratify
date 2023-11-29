@@ -349,7 +349,8 @@ e2e-sbom-setup:
 
 	# Install sbom-tool
 	curl -Lo .staging/sbom/sbom-tool https://github.com/microsoft/sbom-tool/releases/download/${SBOM_TOOL_VERSION}/sbom-tool-linux-x64 && chmod +x .staging/sbom/sbom-tool
-    # Install syft
+	
+	# Install syft
     curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b .staging/sbom ${SYFT_VERSION}
 
 	# Build/Push Images

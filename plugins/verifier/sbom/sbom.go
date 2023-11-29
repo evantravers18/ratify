@@ -49,6 +49,8 @@ type PluginInputConfig struct {
 
 const (
 	SpdxJSONMediaType string = "application/spdx+json"
+	LicenseViolation  string = "LicenseViolation"
+	PackageViolation  string = "PackageViolation"
 )
 
 func main() {
@@ -143,7 +145,10 @@ func processSpdxJSONMediaType(name string, refBlob []byte, disallowedLicenses []
 				return &verifier.VerifierResult{
 					Name:      name,
 					IsSuccess: false,
-					//Extensions: blobDesc.Digest,
+					Extensions: map[string]interface{}{
+						LicenseViolation: licenseViolation,
+						PackageViolation: packageViolation,
+					},
 					Message: fmt.Sprintf("SBOM validation failed, '%v' packages with license violation,  '%v' package with package violation, packages with license violations %v,  packages with violations %v ", len(licenseViolation), len(packageViolation), formatPackageLicense(licenseViolation), formatPackageLicense(packageViolation)),
 				}, err
 			}
