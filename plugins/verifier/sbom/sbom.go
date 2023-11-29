@@ -49,6 +49,7 @@ type PluginInputConfig struct {
 
 const (
 	SpdxJSONMediaType string = "application/spdx+json"
+	CreationInfo      string = "CreationInfo"
 	LicenseViolation  string = "LicenseViolation"
 	PackageViolation  string = "PackageViolation"
 )
@@ -144,7 +145,6 @@ func processSpdxJSONMediaType(name string, refBlob []byte, disallowedLicenses []
 	var err error
 	var spdxDoc *v2_3.Document
 	if spdxDoc, err = jsonLoader.Read(bytes.NewReader(refBlob)); spdxDoc != nil {
-
 		if len(disallowedLicenses) != 0 || len(disallowedPackages) != 0 {
 			packageViolation, licenseViolation, err := getViolations(spdxDoc, disallowedLicenses, disallowedPackages)
 			if err != nil {
@@ -158,17 +158,20 @@ func processSpdxJSONMediaType(name string, refBlob []byte, disallowedLicenses []
 					Extensions: map[string]interface{}{
 						LicenseViolation: licenseViolation,
 						PackageViolation: packageViolation,
+						CreationInfo:     spdxDoc.CreationInfo,
 					},
-					Message: fmt.Sprintf("SBOM validation failed"),
+					Message: fmt.Sprintf("SBOM validation failed. License violation: %v, Package violation: %v", formatPackageLicense(licenseViolation), formatPackageLicense(packageViolation)),
 				}, err
 			}
 		}
 
 		return &verifier.VerifierResult{
-			Name:       name,
-			IsSuccess:  true,
-			Extensions: spdxDoc.CreationInfo,
-			Message:    "SBOM verification success. The schema is good.",
+			Name:      name,
+			IsSuccess: true,
+			Extensions: map[string]interface{}{
+				CreationInfo: spdxDoc.CreationInfo,
+			},
+			Message: "SBOM verification success. The schema is good.",
 		}, err
 	}
 	return &verifier.VerifierResult{

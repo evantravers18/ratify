@@ -64,7 +64,6 @@ func TestFormatPackageLicense(t *testing.T) {
 }
 
 func TestGetViolations(t *testing.T) {
-
 	disallowedPackage := utils.PackageInfo{
 		Name:    "libcrypto3",
 		Version: "3.0.7-r2",
@@ -146,7 +145,6 @@ func TestGetViolations(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run("test scenario", func(t *testing.T) {
-
 			report, err := processSpdxJSONMediaType("test", b, tc.disallowedLicenses, tc.disallowedPackages)
 			if err != nil {
 				t.Fatalf("unexpected error processing spdx json file: %s", filepath.Join("testdata", "bom.json"))
@@ -159,7 +157,6 @@ func TestGetViolations(t *testing.T) {
 
 				AssertEquals(tc.expectedPackageViolations, packageViolation, tc.description, t)
 				AssertEquals(tc.expectedLicenseViolations, licensesViolation, tc.description, t)
-
 			}
 		})
 	}

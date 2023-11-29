@@ -377,11 +377,11 @@ e2e-sbom-setup:
 		.staging/sbom/_manifest/spdx_2.2/manifest.spdx.json:application/spdx+json
 
 	# Generate/Attach sbom with license info
-	# .staging/sbom/syft -o spdx-json --file .staging/sbom/sbom.spdx.json ${TEST_REGISTRY}/sbom:v0
-	# ${GITHUB_WORKSPACE}/bin/oras attach \
-	# 	--artifact-type org.example.sbom.v1 \
-	# 	 ${TEST_REGISTRY}/all:v0 \
-	# 	.staging/sbom/sbom.spdx.json:application/spdx+json
+	 .staging/sbom/syft -o spdx-json --file .staging/sbom/sbom.spdx.json ${TEST_REGISTRY}/sbom:v0
+	 ${GITHUB_WORKSPACE}/bin/oras attach \
+	 	--artifact-type org.example.sbom.v1 \
+	 	${TEST_REGISTRY}/all:v0 \
+	 	.staging/sbom/sbom.spdx.json:application/spdx+json
 
 	# Push Signature to sbom
 	.staging/notation/notation sign -u ${TEST_REGISTRY_USERNAME} -p ${TEST_REGISTRY_PASSWORD} ${TEST_REGISTRY}/sbom@`oras discover -o json --artifact-type org.example.sbom.v0 ${TEST_REGISTRY}/sbom:v0 | jq -r ".manifests[0].digest"`
