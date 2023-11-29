@@ -54,6 +54,11 @@
                 "nestedReferences": "application/vnd.cncf.notary.signature"
             },
             {
+                "name": "sbom",
+                "artifactTypes": "org.example.sbom.v1",
+                "nestedReferences": "application/vnd.cncf.notary.signature"
+            },
+            {
                 "name": "licensechecker",
                 "artifactTypes": "application/vnd.ratify.spdx.v0",
                 "allowedLicenses": [
