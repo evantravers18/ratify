@@ -46,6 +46,7 @@ type DefaultExecutor struct {
 	Stderr io.Writer
 }
 
+// return the command output and the error
 func (e *DefaultExecutor) ExecutePlugin(ctx context.Context, pluginPath string, cmdArgs []string, stdinData []byte, environ []string) ([]byte, error) {
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
@@ -77,17 +78,21 @@ func (e *DefaultExecutor) ExecutePlugin(ctx context.Context, pluginPath string, 
 
 		// Command succeeded
 		if err == nil {
+			logrus.Debug("plugin command succeeded")
 			break
 		}
 
 		// If the plugin is about to be completed, then we wait a
 		// second and try it again
+		logrus.Debugf("error from running command is `%v` after `%v` attempt", err.Error(), i)
 		if strings.Contains(err.Error(), "text file busy") {
+			logrus.Debugf("error contained text file busy")
 			time.Sleep(waitDuration)
 			continue
 		}
 
 		// For all other errors return failed.
+		logrus.Debugf("command returned an error , stdout `%v`, stderr `%v`", string(stdout.Bytes()), string(stderr.Bytes()))
 		return nil, e.pluginErr(err, stdout.Bytes(), stderr.Bytes())
 	}
 
@@ -98,6 +103,7 @@ func (e *DefaultExecutor) ExecutePlugin(ctx context.Context, pluginPath string, 
 		_, _ = stderr.WriteTo(e.Stderr)
 	}
 	// TODO stdout reader
+	logrus.Debugf("plugin command succeeded, stdout `%v`", string(stdout.Bytes()))
 	return stdout.Bytes(), nil
 }
 

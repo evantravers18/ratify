@@ -178,7 +178,7 @@ func (executor Executor) verifyReferenceForJSONPolicy(ctx context.Context, subje
 					IsSuccess: false,
 					Name:      verifier.Name(),
 					Type:      verifier.Type(),
-					Message:   errors.ErrorCodeVerifyReferenceFailure.NewError(errors.Verifier, verifier.Name(), errors.EmptyLink, err, nil, errors.HideStackTrace).Error()}
+					Message:   err.Error()}
 			}
 
 			if len(verifier.GetNestedReferences()) > 0 {
