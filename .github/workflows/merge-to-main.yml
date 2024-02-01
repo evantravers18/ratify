@@ -20,7 +20,7 @@ jobs:
         with:
           github_token: ${{ secrets.ACCESS_TOKEN }}
           destination_branch: main
-          pr_title: "[Automated] Merge2 ${{ github.event.before }} msg ${{ ${{ github.event.head_commit.message }} }} into main"
+          pr_title: "[Automated] Merge2 ${{ github.event.before }} msg ${{ github.event.head_commit.message }} into main"
           pr_body: "Automated Pull Request"
 
       # https://github.com/marketplace/actions/enable-pull-request-automerge
