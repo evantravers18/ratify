@@ -3,7 +3,7 @@ name: Merge staging Into Main
 on:
   push:
     branches:
-      - 'staging' #test1
+      - 'staging'
 
 jobs:
   main:
@@ -12,22 +12,8 @@ jobs:
     steps:
       - name: git checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-     
-      # https://github.com/marketplace/actions/github-pull-request-action
-      - name: create pull request
-        id: open-pr
-        uses: repo-sync/pull-request@v2 #TODO switch for digest
-        with:
-          github_token: ${{ secrets.ACCESS_TOKEN }}
-          destination_branch: main
-          pr_title: "[Automated] Merge2 ${{ github.event.before }} msg ${{ github.event.head_commit.message }} into main"
-          pr_body: "Automated Pull Request"
 
-      # https://github.com/marketplace/actions/enable-pull-request-automerge
-      - name: enable automerge
-        if: steps.open-pr.outputs.pr_number != ''
-        uses: peter-evans/enable-pull-request-automerge@v2 #TODO switch for digest
-        with:
-          token: ${{ secrets.ACCESS_TOKEN }}
-          pull-request-number: ${{ steps.open-pr.outputs.pr_number }}
-          merge-method: merge
+      - name: create pull request
+        run: gh pr create --title "[Automated] ${{ github.event.head_commit.message }} into main" -B main -H staging --body "Automated PR from staging to main" --label "automerge"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}    
