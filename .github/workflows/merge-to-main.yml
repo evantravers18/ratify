@@ -14,6 +14,6 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
 
       - name: create pull request
-        run: gh pr create --title "[Automated] ${{ github.event.head_commit.message }} into main" -B main -H staging --body "Automated PR from staging to main" --label "automerge"
+        run: gh pr create --title "[Automated] ${{ github.event.head_commit.message }} into main" -B main -H staging --body "Automated PR from staging to main"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}    
