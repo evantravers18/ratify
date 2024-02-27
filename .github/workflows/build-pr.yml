@@ -46,7 +46,7 @@ jobs:
       - name: Check build
         run: bin/ratify version
       - name: Upload coverage to codecov.io
-        uses: codecov/codecov-action@4fe8c5f003fae66aa5ebb77cfd3e7bfbbda0b6b0 # v3.1.5
+        uses: codecov/codecov-action@54bcd8715eee62d40e33596ef5e8f0f48dbbccab # v4.1.0
       - name: Run helm lint
         run: helm lint charts/ratify
 
@@ -73,7 +73,7 @@ jobs:
           make install ratify-config install-bats
           make test-e2e-cli LOCAL_REGISTRY_IMAGE=registry GOCOVERDIR=${GITHUB_WORKSPACE}/test/e2e/.cover
       - name: Upload coverage to codecov.io
-        uses: codecov/codecov-action@4fe8c5f003fae66aa5ebb77cfd3e7bfbbda0b6b0 # v3.1.5
+        uses: codecov/codecov-action@54bcd8715eee62d40e33596ef5e8f0f48dbbccab # v4.1.0
 
   build_test_e2e_basic:
     name: "Build and run e2e Test on latest matrix"
