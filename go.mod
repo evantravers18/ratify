@@ -24,7 +24,7 @@ require (
 	github.com/docker/cli v24.0.8+incompatible
 	github.com/docker/distribution v2.8.3+incompatible
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/golang/protobuf v1.5.3
+	github.com/golang/protobuf v1.5.4
 	github.com/google/go-containerregistry v0.17.0
 	github.com/gorilla/mux v1.8.1
 	github.com/notaryproject/notation-core-go v1.0.2
@@ -47,9 +47,9 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v0.39.0
 	golang.org/x/sync v0.5.0
 	google.golang.org/grpc v1.59.0
-	google.golang.org/protobuf v1.31.0
-	k8s.io/api v0.28.6
-	k8s.io/apimachinery v0.28.6
+	google.golang.org/protobuf v1.33.0
+	k8s.io/api v0.28.8
+	k8s.io/apimachinery v0.28.8
 	k8s.io/client-go v0.28.6
 	oras.land/oras-go/v2 v2.3.1
 )
