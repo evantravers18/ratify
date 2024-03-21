@@ -4,7 +4,7 @@ Welcome all! We are very happy to accept community contributions to Ratify, whet
 
 ## Getting Started
 
-* If you don't already have it, you will need [go](https://golang.org/dl/) v1.16+ installed locally to build the project.
+* 2 If you don't already have it, you will need [go](https://golang.org/dl/) v1.16+ installed locally to build the project.
 * You can work on Ratify using any platform using any editor, but you may find it quickest to get started using [VSCode](https://code.visualstudio.com/Download) with the [Go extension](https://marketplace.visualstudio.com/items?itemName=golang.Go).
 * Fork this repo (see [this forking guide](https://guides.github.com/activities/forking/) for more information).
 * Checkout the repo locally with `git clone git@github.com:{your_username}/ratify.git`.
