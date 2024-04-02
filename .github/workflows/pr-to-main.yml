@@ -16,12 +16,6 @@ jobs:
       - name: git checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
       
-      - name: get pr name
-        run: |
-          echo "$GITHUB_CONTEXT"| jq '.event.commits[].message'
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-
       # https://github.com/marketplace/actions/github-pull-request-action
       - name: create pull request with reposync action
         id: open-pr
@@ -29,5 +23,5 @@ jobs:
         with:
           github_token: ${{ secrets.PR_TOKEN }}
           destination_branch: main
-          pr_title: ${{ github.event.commits[][message] }}
+          pr_title: ${{ github.event.commits[0][message] }}
           pr_body: "Automated Pull Request"
