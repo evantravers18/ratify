@@ -11,6 +11,7 @@ on:
     branches:
       - 1.0.0*
       - main
+      - staging
   workflow_dispatch:
 
 permissions: read-all
