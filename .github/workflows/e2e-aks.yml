@@ -45,7 +45,7 @@ jobs:
 
       - name: Run e2e on Azure
         run: |
-          make e2e-aks KUBERNETES_VERSION=${{ matrix.KUBERNETES_VERSION }} GATEKEEPER_VERSION=${{ inputs.gatekeeper_version }} TENANT_ID=${{ env.AZURE_TENANT_ID }}
+          make e2e-aks KUBERNETES_VERSION=${{ inputs.k8s_version }} GATEKEEPER_VERSION=${{ inputs.gatekeeper_version }} TENANT_ID=${{ env.AZURE_TENANT_ID }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
