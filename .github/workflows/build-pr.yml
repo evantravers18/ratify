@@ -54,3 +54,4 @@ jobs:
     with:
       k8s_version: ${{ matrix.KUBERNETES_VERSION }}
       gatekeeper_version: ${{ matrix.GATEKEEPER_VERSION }}
+    secrets: inherit
