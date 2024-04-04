@@ -47,6 +47,9 @@ jobs:
   build_test_aks_e2e_conditional:
     name: "Build and run e2e Test on AKS with conditions"
     if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/e2e-aks.yml
     with:
       k8s_version: ${{ matrix.KUBERNETES_VERSION }}
