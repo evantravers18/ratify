@@ -25,7 +25,7 @@ set -o pipefail
 
 register_feature() {
   az extension add --name aks-preview
-  az feature register --namespace "Microsoft.ContainerService" --name "EnableWorkloadIdentityPreview"
+  az feature register --namespace "Microsoft.ContainerService"
   az provider register --namespace Microsoft.ContainerService
 }
 

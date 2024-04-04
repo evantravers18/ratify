@@ -63,5 +63,3 @@ jobs:
           name: e2e-logs-${{ inputs.k8s_version }}-${{ inputs.gatekeeper_version }}
           path: |
             logs-*.json
-
-
